@@ -9,6 +9,7 @@
 #include "JArray.h"
 #include "JString.h"
 #include <string>
+#include <vector>
 
 template<typename CppType, typename JavaType>
 CppType ConvertToCppType(JNIEnv *env, JavaType javaType) {
@@ -58,6 +59,55 @@ JavaType ConvertFromCppType(JNIEnv *env, const CppType& cppType) {
 template<>
 inline jstring ConvertFromCppType<jstring>(JNIEnv *env, const std::string& str) {
     return env->NewStringUTF(str.data());
+}
+
+template<>
+inline jbooleanArray ConvertFromCppType<jbooleanArray>(JNIEnv *env, const std::vector<bool>& v) {
+    int length = v.size();
+    jbooleanArray array = env->NewBooleanArray(length);
+    std::vector<jboolean> temp(v.begin(), v.end());
+    env->SetBooleanArrayRegion(array, 0, length, temp.data());
+    return array;
+}
+
+template<>
+inline jshortArray ConvertFromCppType<jshortArray>(JNIEnv *env, const std::vector<int16_t>& v) {
+    int length = v.size();
+    jshortArray array = env->NewShortArray(length);
+    env->SetShortArrayRegion(array, 0, length, v.data());
+    return array;
+}
+
+template<>
+inline jintArray ConvertFromCppType<jintArray>(JNIEnv *env, const std::vector<int32_t>& v) {
+    int length = v.size();
+    jintArray array = env->NewIntArray(length);
+    env->SetIntArrayRegion(array, 0, length, v.data());
+    return array;
+}
+
+template<>
+inline jlongArray ConvertFromCppType<jlongArray>(JNIEnv *env, const std::vector<int64_t>& v) {
+    int length = v.size();
+    jlongArray array = env->NewLongArray(length);
+    env->SetLongArrayRegion(array, 0, length, v.data());
+    return array;
+}
+
+template<>
+inline jfloatArray ConvertFromCppType<jfloatArray>(JNIEnv *env, const std::vector<float>& v) {
+    int length = v.size();
+    jfloatArray array = env->NewFloatArray(length);
+    env->SetFloatArrayRegion(array, 0, length, v.data());
+    return array;
+}
+
+template<>
+inline jdoubleArray ConvertFromCppType<jdoubleArray>(JNIEnv *env, const std::vector<double>& v) {
+    int length = v.size();
+    jdoubleArray array = env->NewDoubleArray(length);
+    env->SetDoubleArrayRegion(array, 0, length, v.data());
+    return array;
 }
 
 #endif //JNIBRIDGEGENERATOR_CONVERTERS_H
