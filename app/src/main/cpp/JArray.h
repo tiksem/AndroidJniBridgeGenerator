@@ -6,15 +6,16 @@
 #define JNIBRIDGEGENERATOR_JARRAY_H
 
 #include <jni.h>
+#include <cassert>
 
 template <typename CppT, typename JavaT>
 class JArray {
     JavaT javaArray;
-    CppT *data = nullptr;
+    mutable CppT *data = nullptr;
     JNIEnv *env;
 
     void releaseArrayElements();
-    CppT* getElements();
+    CppT* getElements() const;
 public:
     JArray(JavaT javaArray, JNIEnv *env) : javaArray(javaArray),
                                                  env(env) {}
@@ -25,7 +26,7 @@ public:
     JArray& operator=(const JArray<CppT, JavaT>&) = delete;
     JArray& operator=(JArray<CppT, JavaT>&&) = default;
 
-    CppT *getData() {
+    const CppT *getData() const {
         assert(!data);
         data = getElements();
         return data;

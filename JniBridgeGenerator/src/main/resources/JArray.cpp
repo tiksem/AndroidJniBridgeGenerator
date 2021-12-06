@@ -10,7 +10,7 @@ void J##T##Array::releaseArrayElements() { \
 } \
  \
 template<> \
-CppT* J##T##Array::getElements() { \
+CppT* J##T##Array::getElements() const { \
     return env->Get##T##ArrayElements(javaArray, nullptr); \
 }
 
@@ -27,6 +27,6 @@ void JBooleanArray::releaseArrayElements() {
 }
 
 template<>
-bool* JBooleanArray::getElements() {
+bool* JBooleanArray::getElements() const {
     return reinterpret_cast<bool *>(env->GetBooleanArrayElements(javaArray, nullptr));
 }
