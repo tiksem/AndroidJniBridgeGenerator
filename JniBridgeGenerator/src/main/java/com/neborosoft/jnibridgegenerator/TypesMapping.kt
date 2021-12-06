@@ -1,6 +1,6 @@
 package com.neborosoft.jnibridgegenerator
 
-val DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING  = mapOf(
+val DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING_FROM_JNI_TO_CPP  = mapOf(
     "Unit" to "void",
     "Byte" to "int8_t",
     "Short" to "int16_t",
@@ -19,7 +19,7 @@ val DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING  = mapOf(
     "String" to "JString"
 )
 
-val DEFAULT_KOTLIN_TO_CPP_RETURN_TYPES_MAPPING  = mapOf(
+val DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING_FROM_CPP_TO_JNI  = mapOf(
     "Unit" to "void",
     "Byte" to "int8_t",
     "Short" to "int16_t",

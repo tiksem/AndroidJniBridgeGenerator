@@ -4,13 +4,13 @@
         
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_neborosoft_jnibridgegenerator_CppTestNative_newInstance() {
+Java_com_neborosoft_jnibridgegenerator_CppTestNative_newInstance(JNIEnv *env, jobject thiz) {
     return reinterpret_cast<jlong>(new CppTest());
 }
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_neborosoft_jnibridgegenerator_CppTestNative_release(jlong ptr) {
+Java_com_neborosoft_jnibridgegenerator_CppTestNative_release(JNIEnv *env, jobject thiz, jlong ptr) {
     delete reinterpret_cast<CppTest*&>(ptr);
 }
 

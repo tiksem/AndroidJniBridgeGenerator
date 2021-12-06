@@ -17,8 +17,13 @@ CppType ConvertToCppType(JNIEnv *env, JavaType javaType) {
 }
 
 template<>
-inline JString ConvertToCppType(JNIEnv *env, jstring javaType) {
+inline JString ConvertToCppType<JString>(JNIEnv *env, jstring javaType) {
     return JString(javaType, env);
+}
+
+template<>
+inline std::string ConvertToCppType<std::string>(JNIEnv *env, jstring javaType) {
+    return JString(javaType, env).getData();
 }
 
 template<>

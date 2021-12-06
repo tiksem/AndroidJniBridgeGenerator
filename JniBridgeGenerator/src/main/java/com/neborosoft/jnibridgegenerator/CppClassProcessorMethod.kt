@@ -11,7 +11,7 @@ enum class SpecialMethod {
 }
 
 @KotlinPoetMetadataPreview
-class Method {
+class CppClassProcessorMethod {
     private val kotlinSpecs: List<FunSpec>
     private val jniTypes: List<String>
     private val jniArgNames: List<String>
@@ -89,7 +89,7 @@ class Method {
         }
 
         jniTypes = nativeParameters.map {
-            getJniTypeName(it.type)
+            it.type.getJniTypeName()
         }
 
         val nativeFun = FunSpec.builder(kmFunction.name)
@@ -109,22 +109,17 @@ class Method {
         )
 
         cppTypeNames = kmFunction.valueParameters.map {
-            it.type!!.getCppTypeName(isReturn = false)
+            it.type!!.getCppTypeName(convertFromCppToJni = false)
+                .addConstReferenceToCppTypeNameIfNotPrimitive()
         }
 
-        jniCallReturnType = getJniTypeName(kmFunction.returnType.getTypeName())
-        cppReturnType = kmFunction.returnType.getCppTypeName(isReturn = true)
+        jniCallReturnType = kmFunction.returnType.getTypeName().getJniTypeName()
+        cppReturnType = kmFunction.returnType.getCppTypeName(convertFromCppToJni = true)
         methodName = kmFunction.name
     }
 
     private fun postInit() {
 
-    }
-
-    private fun getJniTypeName(typeName: TypeName?): String {
-        return typeName?.let {
-            KOTLIN_TO_JNI_TYPES_MAPPING[(it as ClassName).simpleName] ?: "jobject"
-        } ?: "void"
     }
 
     fun getKotlinSpecs(): List<FunSpec> {
@@ -142,7 +137,7 @@ class Method {
             return """
             |extern "C"
             |JNIEXPORT $jniCallReturnType JNICALL
-            |Java_${jniPackageName}_${kotlinClassName}_${methodName}() {
+            |Java_${jniPackageName}_${kotlinClassName}_${methodName}(JNIEnv *env, jobject thiz) {
             |    return reinterpret_cast<$jniCallReturnType>(new $cppClassName());
             |}
             """.trimMargin()
@@ -150,7 +145,7 @@ class Method {
             return """
             |extern "C"
             |JNIEXPORT $jniCallReturnType JNICALL
-            |Java_${jniPackageName}_${kotlinClassName}_${methodName}(jlong ptr) {
+            |Java_${jniPackageName}_${kotlinClassName}_${methodName}(JNIEnv *env, jobject thiz, jlong ptr) {
             |    delete reinterpret_cast<$cppClassName*&>(ptr);
             |}
             """.trimMargin()
@@ -164,12 +159,13 @@ class Method {
         val cppCallArgsList = mutableListOf<String>()
         val converters = if (specialMethod == null) {
             cppTypeNames.mapIndexed { index, cppTypeName ->
+                val noRefCppTypeName = cppTypeName.removeConstReferenceFromCppType()
                 val paramName = jniArgNames[index + 1]
                 val convertedParamName = "_$paramName"
                 cppCallArgsList.add(convertedParamName)
 
                 """
-                |    $cppTypeName $convertedParamName = ConvertToCppType<$cppTypeName>(env, $paramName);   
+                |    $noRefCppTypeName $convertedParamName = ConvertToCppType<$noRefCppTypeName>(env, $paramName);   
                 """.trimMargin()
             }.joinToString("\n")
         } else {
@@ -203,9 +199,11 @@ class Method {
             return null
         }
 
-        val args = (cppTypeNames zip jniArgNames.drop(1)).joinToString(",") {
-            it.first.addConstReferenceToCppTypeName() + " " + it.second
-        }
-        return "$cppReturnType ${methodName}($args);"
+        return CodeGenerationUtils.getCppHeaderMethodDeclaration(
+            methodName = methodName,
+            returnType = cppReturnType,
+            types = cppTypeNames,
+            names = jniArgNames.drop(1)
+        )
     }
 }
