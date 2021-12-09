@@ -6,8 +6,10 @@
 #define JNIBRIDGEGENERATOR_JNIBRIDGEINIT_H
 
 #include <jni.h>
+#include "FunctionCallsBridge.h"
 
 void JNIBridgeInit(JNIEnv* env) {
+    InitFunctionsCallBridge(env);
 // Register JObjects
 // Register JObjects
 }

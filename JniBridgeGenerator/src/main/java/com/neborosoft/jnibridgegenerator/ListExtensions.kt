@@ -1,5 +1,7 @@
 package com.neborosoft.jnibridgegenerator
 
+import kotlin.math.absoluteValue
+
 fun <T> List<T>.withPrependedItem(item: T): List<T> {
     return object : AbstractList<T>() {
         override val size: Int
@@ -29,5 +31,16 @@ fun <T> List<T>.withAppendedItem(item: T): List<T> {
             }
         }
 
+    }
+}
+
+fun <T> List<T>.shifted(by: Int): List<T> {
+    return object : AbstractList<T>() {
+        override val size: Int
+            get() = this@shifted.size - by.absoluteValue
+
+        override fun get(index: Int): T {
+            return this@shifted[index + by]
+        }
     }
 }

@@ -8,4 +8,5 @@ interface CppTest {
     fun yo(value: String)
     fun e(list: IntArray)
     fun g(): String
+    fun ffg(l: (Int)->Unit)
 }

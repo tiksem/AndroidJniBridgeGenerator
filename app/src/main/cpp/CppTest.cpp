@@ -19,3 +19,7 @@ int32_t CppTest::getA() {
 void CppTest::yo(const JString &ptr) {
 
 }
+
+void CppTest::ffg(const std::function<void(int32_t)> &l) {
+    l(35);
+}

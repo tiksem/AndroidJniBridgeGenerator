@@ -1,9 +1,6 @@
 package com.neborosoft.jnibridgegenerator.processors
 
-import com.neborosoft.jnibridgegenerator.Constants
-import com.neborosoft.jnibridgegenerator.CppClassProcessorMethod
-import com.neborosoft.jnibridgegenerator.SpecialMethod
-import com.neborosoft.jnibridgegenerator.insert
+import com.neborosoft.jnibridgegenerator.*
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
@@ -14,6 +11,7 @@ class CppClassAnnotationProcessor(
     annotation: Class<out Annotation>,
     kaptKotlinGeneratedDir: String,
     cppOutputDirectory: String,
+    private val lambdaGenerator: LambdaGenerator
 ) : BaseAnnotationProcessor(
     annotation,
     kaptKotlinGeneratedDir,
@@ -75,6 +73,7 @@ class CppClassAnnotationProcessor(
         |#include <jni.h>
         |#include "Converters.h"
         |#include "$cppName.h"
+        |#include "FunctionCallsBridge.h"
         
         |$methodsCode
             
@@ -90,7 +89,7 @@ class CppClassAnnotationProcessor(
         )
 
         kmClass.functions.mapTo(methods) {
-            CppClassProcessorMethod(it)
+            CppClassProcessorMethod(it, lambdaGenerator)
         }
 
         val kotlinFile = File(kaptKotlinGeneratedDir)

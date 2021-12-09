@@ -8,19 +8,13 @@
 #include <jni.h>
 #include <string>
 #include <vector>
+#include "JObject.h"
 
-class JObjectTemplate {
-    JNIEnv* env;
-    jobject obj;
+class JObjectTemplate : public JObject {
 public:
     static void init(JNIEnv* env);
 
     JObjectTemplate(JNIEnv *env, jobject obj);
-    JObjectTemplate(const JObjectTemplate& obj);
-    JObjectTemplate(JObjectTemplate&&) = default;
-    JObjectTemplate& operator=(const JObjectTemplate&);
-    JObjectTemplate& operator=(JObjectTemplate&&) = default;
-    ~JObjectTemplate();
 
     // Java method wrappers
     // Java method wrappers

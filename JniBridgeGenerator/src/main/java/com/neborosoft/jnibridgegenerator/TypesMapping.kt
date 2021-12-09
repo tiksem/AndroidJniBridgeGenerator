@@ -55,3 +55,20 @@ val KOTLIN_TO_JNI_TYPES_MAPPING = mapOf(
     "DoubleArray" to "jdoubleArray",
     "String" to "jstring"
 )
+
+val JNI_SIGNATURE_MAPPING = mapOf(
+    "Unit" to "V",
+    "Byte" to "B",
+    "Short" to "S",
+    "Int" to "I",
+    "Long" to "J",
+    "Float" to "F",
+    "Double" to "D",
+    "Boolean" to "Z",
+    "ByteArray" to "B]",
+    "ShortArray" to "S]",
+    "IntArray" to "I}",
+    "LongArray" to "L]",
+    "FloatArray" to "F]",
+    "DoubleArray" to "D]",
+)

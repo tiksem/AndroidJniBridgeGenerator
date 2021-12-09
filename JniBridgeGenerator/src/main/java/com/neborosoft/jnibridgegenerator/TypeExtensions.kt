@@ -22,13 +22,16 @@ fun ImmutableKmType.getTypeName(): TypeName {
     }
 
     if (arguments.isNotEmpty()) {
-        if (Flag.Class.IS_FUN(flags)) {
-            return LambdaTypeName.get(
+        return if (
+            className.packageName == "kotlin" &&
+            className.simpleName.matches(Regex("Function\\d+"))
+        ) {
+            LambdaTypeName.get(
                 parameters = arguments.dropLast(1).map { ParameterSpec.unnamed(it) },
                 returnType = arguments.last()
             )
         } else {
-            return className.parameterizedBy(
+            className.parameterizedBy(
                 typeArguments = arguments
             )
         }
@@ -106,4 +109,67 @@ fun TypeName?.getJniTypeName(): String {
         is ParameterizedTypeName -> "jobject"
         else -> throw UnsupportedOperationException("Unsupported $this")
     }
+}
+
+fun TypeName.tryGetSimpleName(): String? {
+    return when (this) {
+        is ClassName -> simpleName
+        is ParameterizedTypeName -> {
+            val name = rawType.simpleName
+            val args = typeArguments.map {
+                it.getSimpleName()
+            }.joinToString(", ")
+
+            "$name<$args>"
+        }
+        else -> null
+    }
+}
+
+fun TypeName.getSimpleName(): String {
+    return tryGetSimpleName()
+        ?: throw UnsupportedOperationException(
+            "getSimpleName is supported only for ClassName and ParameterizedTypeName"
+        )
+}
+
+fun TypeName.getJniSignatureMapping(): String {
+    return tryGetSimpleName()?.let { JNI_SIGNATURE_MAPPING[it] } ?: run {
+        when (this) {
+            is ClassName -> "L" + this.canonicalName
+                .replace("kotlin.Any", "java/lang/Object;")
+                .replace('.', '/')
+                .replace("kotlin", "java/lang") + ";"
+            else -> throw UnsupportedOperationException("Not supported yet")
+        }
+    }
+}
+
+fun LambdaTypeName.getJniSignature(): String {
+    val args = parameters.joinToString("") {
+        it.type.getJniSignatureMapping()
+    }
+
+    val returnType = this.returnType.getJniSignatureMapping()
+
+    return "($args)$returnType"
+}
+
+fun LambdaTypeName.getLambdaInterfaceTypeName(): String {
+    val returnTypeString = returnType.getSimpleName()
+    val args = this.parameters.joinToString("") { it.type.getSimpleName() }
+    return "Lambda$returnTypeString$args"
+}
+
+fun String.getJniMethodCallMethodNameFromJniTypeName(): String {
+    if (this == "void") {
+        return "CallVoidMethod"
+    }
+
+    if (this == "jstring") {
+        return "CallObjectMethod"
+    }
+
+    val type = this.drop(1).replaceFirstChar(Char::titlecase)
+    return "Call${type}Method"
 }

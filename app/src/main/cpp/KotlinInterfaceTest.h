@@ -8,19 +8,13 @@
 #include <jni.h>
 #include <string>
 #include <vector>
+#include "JObject.h"
 
-class KotlinInterfaceTest {
-    JNIEnv* env;
-    jobject obj;
+class KotlinInterfaceTest : public JObject {
 public:
     static void init(JNIEnv* env);
 
     KotlinInterfaceTest(JNIEnv *env, jobject obj);
-    KotlinInterfaceTest(const KotlinInterfaceTest& obj);
-    KotlinInterfaceTest(KotlinInterfaceTest&&) = default;
-    KotlinInterfaceTest& operator=(const KotlinInterfaceTest&);
-    KotlinInterfaceTest& operator=(KotlinInterfaceTest&&) = default;
-    ~KotlinInterfaceTest();
 
     // Java method wrappers
     void d(int32_t e);

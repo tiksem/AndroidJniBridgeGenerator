@@ -13,6 +13,7 @@ class CppTest {
 public:
     // Public Jni Interface
         void e(const JIntArray& list);
+        void ffg(const std::function<void(int32_t)>& l);
         std::string g();
         int32_t getA();
         void yo(const JString& value);

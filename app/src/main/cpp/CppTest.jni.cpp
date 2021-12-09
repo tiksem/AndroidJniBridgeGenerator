@@ -1,6 +1,7 @@
 #include <jni.h>
 #include "Converters.h"
 #include "CppTest.h"
+#include "FunctionCallsBridge.h"
         
 extern "C"
 JNIEXPORT jlong JNICALL
@@ -20,6 +21,18 @@ Java_com_neborosoft_jnibridgegenerator_CppTestNative_e(JNIEnv *env, jobject thiz
     JIntArray _list = ConvertToCppType<JIntArray>(env, list);   
     auto* self = reinterpret_cast<CppTest*&>(ptr);
     self->e(_list);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_neborosoft_jnibridgegenerator_CppTestNative_ffg(JNIEnv *env, jobject thiz, jlong ptr, jobject l) {
+    JObject l_obj(env, l);
+    std::function<void(int32_t)> _l = [=] (int32_t param0) {
+        jint _param0 = ConvertFromCppType<int32_t>(env, param0);   
+        CallLambdaFunctionLambdaUnitInt(env, l_obj.getJavaObject(), _param0);   
+    };
+    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    self->ffg(_l);
 }
 
 extern "C"

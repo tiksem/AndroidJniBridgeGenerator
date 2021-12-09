@@ -16,10 +16,12 @@ class CppClassProcessorMethod {
     private val jniTypes: List<String>
     private val jniArgNames: List<String>
     private val cppTypeNames: List<String>
+    private val lambdas: List<LambdaTypeName?>
     private val specialMethod: SpecialMethod?
     private val jniCallReturnType: String
     private val cppReturnType: String
     private val methodName: String
+    private lateinit var lambdaGenerator: LambdaGenerator
 
     constructor(specialMethod: SpecialMethod) {
         this.specialMethod = specialMethod
@@ -59,11 +61,13 @@ class CppClassProcessorMethod {
             }
         }
         cppTypeNames = listOf()
+        lambdas = listOf()
         cppReturnType = ""
     }
 
-    constructor(kmFunction: ImmutableKmFunction) {
+    constructor(kmFunction: ImmutableKmFunction, lambdaGenerator: LambdaGenerator) {
         this.specialMethod = null
+        this.lambdaGenerator = lambdaGenerator
 
         val callArgsList = arrayListOf(PTR)
 
@@ -71,15 +75,25 @@ class CppClassProcessorMethod {
             callArgsList.add(p.name)
             ParameterSpec(
                 name = p.name,
-                type = p.type!!.getTypeName()
+                type = p.type!!.getTypeName().let {
+                    if (it is LambdaTypeName) {
+                        lambdaGenerator.generateIfNotGenerated(it)
+                    } else {
+                        it
+                    }
+                }
             )
+        }
+
+        lambdas = kmFunction.valueParameters.map {
+            it.type?.getTypeName() as? LambdaTypeName
         }
 
         val callArgs = callArgsList.joinToString(", ")
 
         val nativeParameters = baseParameterSpecs.withPrependedItem(
             ParameterSpec(
-                name = Constants.PTR,
+                name = PTR,
                 type = LONG
             )
         )
@@ -118,12 +132,82 @@ class CppClassProcessorMethod {
         methodName = kmFunction.name
     }
 
-    private fun postInit() {
-
-    }
-
     fun getKotlinSpecs(): List<FunSpec> {
         return kotlinSpecs
+    }
+
+    private data class Converters(
+        val code: String,
+        val args: String
+    )
+
+    private fun generateToCppParamConverters(
+        cppTypeNames: List<String>,
+        unconvertedParamNames: List<String>,
+        lambdas: List<LambdaTypeName?>
+    ): Converters {
+        val cppCallArgsList = mutableListOf<String>()
+        val code = cppTypeNames.mapIndexed { index, cppTypeName ->
+            val noRefCppTypeName = cppTypeName.removeConstReferenceFromCppType()
+            val paramName = unconvertedParamNames[index]
+            val convertedParamName = "_$paramName"
+            cppCallArgsList.add(convertedParamName)
+
+            val lambda = lambdas[index]
+            if (lambda == null) {
+                """
+                |    $noRefCppTypeName $convertedParamName = ConvertToCppType<$noRefCppTypeName>(env, $paramName);   
+                """.trimMargin()
+            } else {
+                val cppTypeNames = lambda.parameters.map {
+                    it.type.getCppTypeName(convertFromCppToJni = true)
+                }
+
+                val lambdaObjParamName = "${paramName}_obj"
+
+                val cppReturnType = lambda.returnType.getCppTypeName(convertFromCppToJni = true)
+
+                val cppLambdaArgs = cppTypeNames.mapIndexed { i, it ->
+                    "$it param$i"
+                }.joinToString(", ")
+
+                val converters = cppTypeNames.mapIndexed { i, it ->
+                    val jniTypeName = lambda.parameters[0].type.getJniTypeName()
+                    """
+                    |    $jniTypeName _param$i = ConvertFromCppType<$it>(env, param$i);   
+                    """.trimMargin()
+                }.joinToString("\n")
+
+                var callLambdaArgs = cppTypeNames.indices.joinToString(", ") {
+                    "_param$it"
+                }
+                if (callLambdaArgs.isNotEmpty()) {
+                    callLambdaArgs = ", $callLambdaArgs"
+                }
+
+                val callFunctionName = "CallLambdaFunction${lambda.getLambdaInterfaceTypeName()}"
+                val callFunctionObjParam = "$lambdaObjParamName.getJavaObject()"
+
+                val body = if (cppReturnType != "void") {
+                    """
+                    auto callResult = $callFunctionName(env, $callFunctionObjParam$callLambdaArgs);
+                    return ConvertToCppType<$cppReturnType>(env, callResult);
+                    """.trimMargin()
+                } else {
+                    "$callFunctionName(env, $callFunctionObjParam$callLambdaArgs);"
+                }
+
+                """
+                |    JObject $lambdaObjParamName(env, $paramName);
+                |    $noRefCppTypeName $convertedParamName = [=] ($cppLambdaArgs) {
+                |    $converters
+                |        $body   
+                |    };
+                """.trimMargin()
+            }
+        }.joinToString("\n")
+
+        return Converters(code, args = cppCallArgsList.joinToString(", "))
     }
 
     fun getJniMethodCall(
@@ -156,29 +240,21 @@ class CppClassProcessorMethod {
             it.first + " " + it.second
         }
         val jniCallArgs = jniCallArgsList.joinToString(", ")
-        val cppCallArgsList = mutableListOf<String>()
         val converters = if (specialMethod == null) {
-            cppTypeNames.mapIndexed { index, cppTypeName ->
-                val noRefCppTypeName = cppTypeName.removeConstReferenceFromCppType()
-                val paramName = jniArgNames[index + 1]
-                val convertedParamName = "_$paramName"
-                cppCallArgsList.add(convertedParamName)
-
-                """
-                |    $noRefCppTypeName $convertedParamName = ConvertToCppType<$noRefCppTypeName>(env, $paramName);   
-                """.trimMargin()
-            }.joinToString("\n")
+            generateToCppParamConverters(
+                cppTypeNames = cppTypeNames,
+                unconvertedParamNames = jniArgNames.shifted(1),
+                lambdas = lambdas
+            )
         } else {
-            ""
+            Converters(code = "", args = "")
         }
 
-        val cppCallArgs = cppCallArgsList.joinToString(", ")
-
         val ending = if (cppReturnType.isEmpty() || cppReturnType == "void") {
-            "|    self->$methodName($cppCallArgs);"
+            "|    self->$methodName(${converters.args});"
         } else {
             """
-            |    auto _result = self->$methodName($cppCallArgs);
+            |    auto _result = self->$methodName(${converters.args});
             |    return ConvertFromCppType<$jniCallReturnType>(env, _result);
             """.trimMargin()
         }
@@ -187,7 +263,7 @@ class CppClassProcessorMethod {
         |extern "C"
         |JNIEXPORT $jniCallReturnType JNICALL
         |Java_${jniPackageName}_${kotlinClassName}_${methodName}($jniCallArgs) {
-        |$converters
+        |${converters.code}
         |    auto* self = reinterpret_cast<$cppClassName*&>($PTR);
         |$ending
         |}

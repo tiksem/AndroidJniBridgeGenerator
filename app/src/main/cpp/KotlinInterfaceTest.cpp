@@ -11,11 +11,8 @@ static jmethodID dId = nullptr;
 static jmethodID eeerId = nullptr;
 // Method ides declaration
 
-KotlinInterfaceTest::KotlinInterfaceTest(JNIEnv *env, jobject obj) : env(env), obj(obj) {
-}
-
 void KotlinInterfaceTest::init(JNIEnv* env) {
-    jclass clazz = env->FindClass("classname");
+    jclass clazz = env->FindClass("com/neborosoft/jnibridgegenerator/KotlinInterfaceTest");
     // Method ides generation
     dId = env->GetMethodID(clazz, "d", "(I)V");
     
@@ -23,19 +20,7 @@ void KotlinInterfaceTest::init(JNIEnv* env) {
     // Method ides generation
 }
 
-KotlinInterfaceTest::~KotlinInterfaceTest() {
-    env->DeleteLocalRef(obj);
-}
-
-KotlinInterfaceTest::KotlinInterfaceTest(const KotlinInterfaceTest &obj) {
-    this->env = obj.env;
-    this->obj = env->NewLocalRef(obj.obj);
-}
-
-KotlinInterfaceTest &KotlinInterfaceTest::operator=(const KotlinInterfaceTest & o) {
-    env->DeleteGlobalRef(obj);
-    obj = env->NewLocalRef(o.obj);
-    return *this;
+KotlinInterfaceTest::KotlinInterfaceTest(JNIEnv *env, jobject obj) : JObject(env, obj) {
 }
 
 // Java method wrappers

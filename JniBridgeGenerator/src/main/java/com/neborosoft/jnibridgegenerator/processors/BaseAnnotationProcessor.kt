@@ -1,5 +1,6 @@
 package com.neborosoft.jnibridgegenerator.processors
 
+import com.neborosoft.jnibridgegenerator.Utils
 import com.neborosoft.jnibridgegenerator.readIntoString
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
@@ -14,9 +15,7 @@ abstract class BaseAnnotationProcessor(
     protected val cppOutputDirectory: String
 ) {
     protected fun readResource(resourceName: String): String {
-        return javaClass.classLoader.getResourceAsStream(resourceName)
-            ?.readIntoString()
-            ?: throw IllegalStateException("$resourceName resource not found")
+        return Utils.readResource(resourceName)
     }
 
     open fun process(

@@ -3,10 +3,8 @@ package com.neborosoft.jnibridgegenerator
 import com.google.auto.service.AutoService
 import com.neborosoft.annotations.CppAccessibleInterface
 import com.neborosoft.annotations.CppClass
-import com.neborosoft.jnibridgegenerator.*
 import com.neborosoft.jnibridgegenerator.processors.CppAccessibleInterfaceAnnotationProcessor
 import com.neborosoft.jnibridgegenerator.processors.CppClassAnnotationProcessor
-import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.*
 import java.io.File
 import java.io.FileOutputStream
@@ -39,15 +37,39 @@ class MainProcessor : AbstractProcessor() {
 
         copyResources(File(cppOutputDirectory))
 
-        CppClassAnnotationProcessor(
-            CppClass::class.java, kaptKotlinGeneratedDir, cppOutputDirectory
-        ).process(processingEnv, roundEnv)
+        val lambdaGenerator = LambdaGenerator(kaptKotlinGeneratedDir)
+        val processors = arrayOf(
+            CppClassAnnotationProcessor(
+                CppClass::class.java, kaptKotlinGeneratedDir, cppOutputDirectory, lambdaGenerator
+            ),
+            CppAccessibleInterfaceAnnotationProcessor(
+                CppAccessibleInterface::class.java, kaptKotlinGeneratedDir, cppOutputDirectory
+            )
+        )
 
-        CppAccessibleInterfaceAnnotationProcessor(
-            CppAccessibleInterface::class.java, kaptKotlinGeneratedDir, cppOutputDirectory
-        ).process(processingEnv, roundEnv)
+        processors.forEach {
+            it.process(processingEnv, roundEnv)
+        }
+
+        generateCppLambdaBridge(lambdaGenerator)
 
         return true
+    }
+
+    private fun generateCppLambdaBridge(lambdaGenerator: LambdaGenerator) {
+        val templateFunctionCallsBridgeH = Utils.readResource(
+            "FunctionCallsBridge.h"
+        )
+        val codeH = lambdaGenerator.generateFunctionsCallBridgeHeader(templateFunctionCallsBridgeH)
+        File(cppOutputDirectory, "FunctionCallsBridge.h").writeText(codeH)
+
+        val templateFunctionCallsBridgeCpp = Utils.readResource(
+            "FunctionCallsBridge.cpp"
+        )
+        val codeCpp = lambdaGenerator.generateFunctionsCallBridgeCpp(
+            templateFunctionCallsBridgeCpp
+        )
+        File(cppOutputDirectory, "FunctionCallsBridge.cpp").writeText(codeCpp)
     }
 
     private fun copyResources(dir: File) {

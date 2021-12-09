@@ -12,6 +12,7 @@ object Constants {
     const val J_OBJECT_TEMPLATE_CLASS_NAME = "JObjectTemplate"
     const val KOTLIN_CLASS_IMPLEMENTATION_POSTFIX = "Native"
     const val PTR = "ptr"
+    const val KOTLIN_PACKAGE_NAME = "com.neborosoft.jnibridgegenerator"
 
     val CPP_RESOURCES = listOf(
         "Converters.h",
@@ -19,7 +20,10 @@ object Constants {
         "JArray.cpp",
         "JString.h",
         "JString.cpp",
-        "JNIBridgeInit.h"
+        "JFunction.h",
+        "JNIBridgeInit.h",
+        "JObject.h",
+        "JObject.cpp"
     )
 
     val CPP_PRIMITIVES = setOf(

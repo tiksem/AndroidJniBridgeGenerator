@@ -28,19 +28,6 @@ class CppKotlinInterfaceWrapperProcessorMethod(
         }
     }
 
-    private fun getJniMethodCallMethodName(): String {
-        if (jniReturnType == "void") {
-            return "CallVoidMethod"
-        }
-
-        if (jniReturnType == "jstring") {
-            return "CallObjectMethod"
-        }
-
-        val type = jniReturnType.drop(1).replaceFirstChar(Char::titlecase)
-        return "Call${type}Method"
-    }
-
     fun getHeaderDeclaration(): String {
         return CodeGenerationUtils.getCppHeaderMethodDeclaration(
             methodName = kmFunction.name,
@@ -83,7 +70,7 @@ class CppKotlinInterfaceWrapperProcessorMethod(
         }.replace("JniReturnType", jniReturnType)
             .replace("ReturnType", cppReturnType)
             .replace("args", CodeGenerationUtils.generateCppMethodArgs(cppTypes, names))
-            .replace("CallObjectMethod", getJniMethodCallMethodName())
+            .replace("CallObjectMethod", jniReturnType.getJniMethodCallMethodNameFromJniTypeName())
             .replace("methodName", kmFunction.name)
             .replace("convertedArgs", convertedArgs)
             .replace("converters", converters)

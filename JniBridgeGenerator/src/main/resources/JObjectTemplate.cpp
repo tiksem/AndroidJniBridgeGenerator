@@ -9,9 +9,6 @@
 static jmethodID methodNameId = nullptr;
 // Method ides declaration
 
-JObjectTemplate::JObjectTemplate(JNIEnv *env, jobject obj) : env(env), obj(obj) {
-}
-
 void JObjectTemplate::init(JNIEnv* env) {
     jclass clazz = env->FindClass("classname");
     // Method ides generation
@@ -19,19 +16,7 @@ void JObjectTemplate::init(JNIEnv* env) {
     // Method ides generation
 }
 
-JObjectTemplate::~JObjectTemplate() {
-    env->DeleteLocalRef(obj);
-}
-
-JObjectTemplate::JObjectTemplate(const JObjectTemplate &obj) {
-    this->env = obj.env;
-    this->obj = env->NewLocalRef(obj.obj);
-}
-
-JObjectTemplate &JObjectTemplate::operator=(const JObjectTemplate & o) {
-    env->DeleteGlobalRef(obj);
-    obj = env->NewLocalRef(o.obj);
-    return *this;
+JObjectTemplate::JObjectTemplate(JNIEnv *env, jobject obj) : JObject(env, obj) {
 }
 
 // Java method wrappers

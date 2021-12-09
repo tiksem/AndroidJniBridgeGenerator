@@ -14,7 +14,7 @@ JString::~JString() {
     }
 }
 
-const char *JString::getData() {
+const char *JString::getData() const {
     assert(!data);
     data = env->GetStringUTFChars(string, nullptr);
     return data;

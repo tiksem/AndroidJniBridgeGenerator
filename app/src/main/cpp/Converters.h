@@ -10,6 +10,7 @@
 #include "JString.h"
 #include <string>
 #include <vector>
+#include <functional>
 
 template<typename CppType, typename JavaType>
 CppType ConvertToCppType(JNIEnv *env, JavaType javaType) {

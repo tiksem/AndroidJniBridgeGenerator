@@ -26,7 +26,11 @@ class CppAccessibleInterfaceAnnotationProcessor(
         val header = generateJObjectTemplateHeader(className, methods)
         File(cppOutputDirectory, "$className.h").writeText(header)
 
-        val cpp = generateJObjectTemplateCpp(className, methods)
+        val cpp = generateJObjectTemplateCpp(
+            cppClassName = className,
+            kotlinJniClassName = kmClass.name,
+            methods = methods
+        )
         File(cppOutputDirectory, "$className.cpp").writeText(cpp)
 
         bridgeInitCalls.add("    $className::init(env);\n")
@@ -68,6 +72,7 @@ class CppAccessibleInterfaceAnnotationProcessor(
 
     private fun generateJObjectTemplateCpp(
         cppClassName: String,
+        kotlinJniClassName: String,
         methods: List<CppKotlinInterfaceWrapperProcessorMethod>
     ): String {
         val cppTemplate = readResource(Constants.J_OBJECT_TEMPLATE_CPP)
@@ -94,6 +99,7 @@ class CppAccessibleInterfaceAnnotationProcessor(
             .replace(methodGenerationTemplate, methodsSource)
             .replace(methodsIdGenerationTemplate, idGeneration)
             .replace(methodsIdDeclarationTemplate, idDeclaration)
+            .replace("classname", kotlinJniClassName)
             .replace(Constants.J_OBJECT_TEMPLATE_CLASS_NAME, cppClassName)
 
     }
