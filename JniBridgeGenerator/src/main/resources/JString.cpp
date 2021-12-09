@@ -23,3 +23,25 @@ const char *JString::getData() const {
 jint JString::length() const {
     return env->GetStringLength(string);
 }
+
+JString::JString(JString&& o) {
+    this->data = o.data;
+    this->env = o.env;
+    this->string = o.string;
+    o.string = nullptr;
+    o.data = nullptr;
+}
+
+JString& JString::operator=(JString&& o) {
+    if (&o == this) {
+        return *this;
+    }
+
+    this->data = o.data;
+    this->env = o.env;
+    this->string = o.string;
+    o.string = nullptr;
+    o.data = nullptr;
+
+    return *this;
+}

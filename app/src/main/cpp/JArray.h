@@ -21,10 +21,32 @@ public:
                                                  env(env) {}
 
     JArray(const JArray<CppT, JavaT>&) = delete;
-    JArray(JArray<CppT, JavaT>&&) = default;
+
+    JArray(JArray<CppT, JavaT>&& o) {
+        this->data = o.data;
+        this->env = o.env;
+        this->javaArray = o.javaArray;
+
+        o.data = nullptr;
+        o.javaArray = nullptr;
+    }
 
     JArray& operator=(const JArray<CppT, JavaT>&) = delete;
-    JArray& operator=(JArray<CppT, JavaT>&&) = default;
+
+    JArray& operator=(JArray<CppT, JavaT>&& o) {
+        if (this == &o) {
+            return *this;
+        }
+
+        this->data = o.data;
+        this->env = o.env;
+        this->javaArray = o.javaArray;
+
+        o.data = nullptr;
+        o.javaArray = nullptr;
+
+        return *this;
+    };
 
     const CppT *getData() const {
         assert(!data);

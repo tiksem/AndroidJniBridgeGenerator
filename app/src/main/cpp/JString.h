@@ -15,10 +15,10 @@ public:
     JString(jstring string, JNIEnv *env);
 
     JString(const JString&) = delete;
-    JString(JString&&) = default;
+    JString(JString&&);
 
     JString& operator=(const JString&) = delete;
-    JString& operator=(JString&&) = default;
+    JString& operator=(JString&&);
 
     const char *getData() const;
     jint length() const;
