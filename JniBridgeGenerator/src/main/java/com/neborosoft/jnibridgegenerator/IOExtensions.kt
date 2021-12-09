@@ -8,6 +8,5 @@ fun InputStream.readIntoString(): String {
 }
 
 fun InputStream.readIntoStringBuilder(): StringBuilder {
-    val bytes = readAllBytes()
     return StringBuilder(readIntoString())
 }

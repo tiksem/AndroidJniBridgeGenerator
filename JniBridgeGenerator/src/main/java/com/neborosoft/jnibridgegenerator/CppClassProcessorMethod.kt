@@ -37,8 +37,13 @@ class CppClassProcessorMethod {
                                 type = LONG
                             ))
                         ).build(),
+                    FunSpec.builder("finalize")
+                        .addModifiers(KModifier.PROTECTED)
+                        .addStatement("release()")
+                        .build(),
                     FunSpec.builder(methodName)
                         .addStatement("release($PTR)")
+                        .addStatement("$PTR = 0")
                         .build()
                 )
 

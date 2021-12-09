@@ -24,7 +24,9 @@ class CppClassAnnotationProcessor(
     ): FileSpec {
         val type = TypeSpec.classBuilder(kotlinClassName)
             .addProperty(
-                Constants.PTR, LONG, KModifier.PRIVATE
+                PropertySpec.builder(Constants.PTR, LONG, KModifier.PRIVATE)
+                    .mutable()
+                    .build()
             )
             .addFunctions(funSpecs = methods.flatMap {
                 it.getKotlinSpecs()

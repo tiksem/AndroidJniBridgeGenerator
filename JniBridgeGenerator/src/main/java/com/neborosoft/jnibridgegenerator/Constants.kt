@@ -20,7 +20,6 @@ object Constants {
         "JArray.cpp",
         "JString.h",
         "JString.cpp",
-        "JFunction.h",
         "JNIBridgeInit.h",
         "JObject.h",
         "JObject.cpp"
