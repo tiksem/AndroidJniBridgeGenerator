@@ -23,3 +23,7 @@ void CppTest::yo(const JString &ptr) {
 void CppTest::ffg(const std::function<void(int32_t)> &l) {
     l(35);
 }
+
+void CppTest::rrr(KotlinInterfaceTest i) {
+
+}

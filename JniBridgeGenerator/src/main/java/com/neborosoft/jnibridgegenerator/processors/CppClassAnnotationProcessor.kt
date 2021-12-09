@@ -42,6 +42,7 @@ class CppClassAnnotationProcessor(
 
     private fun generateCppTemplateHeader(
         methods: List<CppClassProcessorMethod>,
+        includes: String,
         cppClassName: String
     ): String {
         val methodsDeclarations = methods.mapNotNull {
@@ -53,7 +54,11 @@ class CppClassAnnotationProcessor(
         val code = methodsDeclarations.joinToString("\n") {
             "        $it"
         } + "\n"
+
+        val includeIndex = cppTemplate.indexOf(Constants.INCLUDE_START_TOKEN)
+
         return cppTemplate.insert(index + Constants.JNI_PUBLIC_INTERFACE_TOKEN.length, code)
+            .insert(includeIndex + Constants.INCLUDE_START_TOKEN.length, includes)
             .replace(Constants.CPP_TEMPLATE_CLASS_NAME, cppClassName)
     }
 
@@ -103,20 +108,28 @@ class CppClassAnnotationProcessor(
         )
         kotlinClass.writeTo(kotlinFile)
 
-        val cppClass = generateCppTemplateHeader(
-            methods = methods,
-            cppClassName = className
-        )
-        val cppFile = File(cppOutputDirectory, "$className.h")
-        cppFile.writeText(cppClass)
-
         val jniCode = generateJNIBridgeCalls(
             packageName = packageName,
             cppName = className,
             kotlinName = kotlinClassName,
             methods = methods
         )
+
+        val headers = methods.flatMap {
+            it.getRequestedCppHeaders()
+        }.distinct().joinToString("\n") {
+            "#include \"$it.h\""
+        } + "\n"
+
         val jniCppFile = File(cppOutputDirectory, "$className.jni.cpp")
-        jniCppFile.writeText(jniCode)
+        jniCppFile.writeText(headers + jniCode)
+
+        val cppClass = generateCppTemplateHeader(
+            methods = methods,
+            cppClassName = className,
+            includes = headers
+        )
+        val cppFile = File(cppOutputDirectory, "$className.h")
+        cppFile.writeText(cppClass)
     }
 }

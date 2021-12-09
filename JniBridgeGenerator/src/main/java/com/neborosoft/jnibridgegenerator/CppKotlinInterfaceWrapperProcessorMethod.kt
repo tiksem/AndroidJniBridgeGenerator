@@ -18,7 +18,7 @@ class CppKotlinInterfaceWrapperProcessorMethod(
         jniReturnType = kmFunction.returnType.getTypeName().getJniTypeName()
         cppTypes = kmFunction.valueParameters.map {
             it.type!!.getCppTypeName(convertFromCppToJni = true)
-                .addConstReferenceToCppTypeNameIfNotPrimitive()
+                .addConstReferenceToCppTypeNameIfRequired()
         }
         names = kmFunction.valueParameters.map {
             it.name
@@ -64,6 +64,11 @@ class CppKotlinInterfaceWrapperProcessorMethod(
                     "    return ConvertToCppType<ReturnType>(env, res);\n",
                     ""
                 ).replace("static_cast<JniReturnType>", "")
+            } else if(TypesMapping.isCppTypeRegistered(cppReturnType)) {
+                it.replace(
+                    "ConvertToCppType<ReturnType>(env, res)",
+                    "$cppReturnType(env, res)"
+                )
             } else {
                 it
             }

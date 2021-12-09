@@ -4,16 +4,14 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.ImmutableKmType
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
-import kotlinx.metadata.Flag
 import kotlinx.metadata.KmClassifier
-import java.lang.UnsupportedOperationException
 
 @KotlinPoetMetadataPreview
 fun ImmutableKmType.getTypeName(): TypeName {
     val s = (classifier as KmClassifier.Class).name.split("/")
 
     val className = ClassName(
-        packageName = s.subList(0, s.size - 1).joinToString("/"),
+        packageName = s.subList(0, s.size - 1).joinToString("."),
         simpleNames = listOf(s.last())
     )
 
@@ -55,8 +53,8 @@ fun ImmutableKmType.getStringTypeNameWithoutDots(): String {
     return name
 }
 
-fun String.addConstReferenceToCppTypeNameIfNotPrimitive(): String {
-    if (isPrimitiveCppType()) {
+fun String.addConstReferenceToCppTypeNameIfRequired(): String {
+    if (isPrimitiveCppType() || TypesMapping.isCppTypeRegistered(this)) {
         return this
     }
 
@@ -72,14 +70,11 @@ fun String.removeConstReferenceFromCppType(): String {
 }
 
 fun TypeName.getCppTypeName(convertFromCppToJni: Boolean): String {
-    val mapping = if (convertFromCppToJni) {
-        DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING_FROM_CPP_TO_JNI
-    } else {
-        DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING_FROM_JNI_TO_CPP
-    }
-
     return when (this) {
-        is ClassName -> mapping[this.simpleName]
+        is ClassName -> TypesMapping.getCppTypeName(
+            kotlinTypeName = this.simpleName,
+            fromJniToCpp = !convertFromCppToJni
+        ) ?: TypesMapping.getRegisteredCppTypeName(kotlinTypeName = this.simpleName)
         is LambdaTypeName -> {
             val returnType = this.returnType.getCppTypeName(convertFromCppToJni = true)
             val args = this.parameters.joinToString(", ") {
@@ -104,7 +99,7 @@ fun ImmutableKmType.getCppTypeName(convertFromCppToJni: Boolean): String {
 fun TypeName?.getJniTypeName(): String {
     return when (this) {
         null -> "void"
-        is ClassName -> KOTLIN_TO_JNI_TYPES_MAPPING[simpleName] ?: "jobject"
+        is ClassName -> TypesMapping.getJniType(kotlinTypeName = simpleName)
         is LambdaTypeName -> "jobject"
         is ParameterizedTypeName -> "jobject"
         else -> throw UnsupportedOperationException("Unsupported $this")
@@ -134,7 +129,7 @@ fun TypeName.getSimpleName(): String {
 }
 
 fun TypeName.getJniSignatureMapping(): String {
-    return tryGetSimpleName()?.let { JNI_SIGNATURE_MAPPING[it] } ?: run {
+    return tryGetSimpleName()?.let { TypesMapping.getJniSignature(kotlinTypeName = it) } ?: run {
         when (this) {
             is ClassName -> "L" + this.canonicalName
                 .replace("kotlin.Any", "java/lang/Object;")

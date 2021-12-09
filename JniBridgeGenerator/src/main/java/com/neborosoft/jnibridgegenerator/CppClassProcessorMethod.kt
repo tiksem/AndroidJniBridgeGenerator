@@ -20,6 +20,7 @@ class CppClassProcessorMethod {
     private val specialMethod: SpecialMethod?
     private val jniCallReturnType: String
     private val cppReturnType: String
+    private val requestedIncludeHeaders = ArrayList<String>()
     private val methodName: String
     private lateinit var lambdaGenerator: LambdaGenerator
 
@@ -129,7 +130,7 @@ class CppClassProcessorMethod {
 
         cppTypeNames = kmFunction.valueParameters.map {
             it.type!!.getCppTypeName(convertFromCppToJni = false)
-                .addConstReferenceToCppTypeNameIfNotPrimitive()
+                .addConstReferenceToCppTypeNameIfRequired()
         }
 
         jniCallReturnType = kmFunction.returnType.getTypeName().getJniTypeName()
@@ -146,11 +147,21 @@ class CppClassProcessorMethod {
         val args: String
     )
 
+    private fun addRequestedCppHeaders(cppTypes: List<String>) {
+        requestedIncludeHeaders.addAll(cppTypes.map {
+            it.removeConstReferenceFromCppType()
+        }.filter {
+            TypesMapping.isCppTypeRegistered(it)
+        })
+    }
+
     private fun generateToCppParamConverters(
         cppTypeNames: List<String>,
         unconvertedParamNames: List<String>,
         lambdas: List<LambdaTypeName?>
     ): Converters {
+        addRequestedCppHeaders(cppTypeNames)
+
         val cppCallArgsList = mutableListOf<String>()
         val code = cppTypeNames.mapIndexed { index, cppTypeName ->
             val noRefCppTypeName = cppTypeName.removeConstReferenceFromCppType()
@@ -160,13 +171,21 @@ class CppClassProcessorMethod {
 
             val lambda = lambdas[index]
             if (lambda == null) {
+                val convertCall = if (TypesMapping.isCppTypeRegistered(noRefCppTypeName)) {
+                    "$noRefCppTypeName(env, $paramName)"
+                } else {
+                    "ConvertToCppType<$noRefCppTypeName>(env, $paramName)"
+                }
+
                 """
-                |    $noRefCppTypeName $convertedParamName = ConvertToCppType<$noRefCppTypeName>(env, $paramName);   
+                |    $noRefCppTypeName $convertedParamName = $convertCall;   
                 """.trimMargin()
             } else {
                 val cppTypeNames = lambda.parameters.map {
                     it.type.getCppTypeName(convertFromCppToJni = true)
                 }
+
+                addRequestedCppHeaders(cppTypeNames)
 
                 val lambdaObjParamName = "${paramName}_obj"
 
@@ -193,10 +212,16 @@ class CppClassProcessorMethod {
                 val callFunctionName = "CallLambdaFunction${lambda.getLambdaInterfaceTypeName()}"
                 val callFunctionObjParam = "$lambdaObjParamName.getJavaObject()"
 
+                val convertCall = if (TypesMapping.isCppTypeRegistered(cppReturnType)) {
+                    "ConvertToCppType<$cppReturnType>(env, callResult)"
+                } else {
+                    "$cppReturnType(env, callResult)"
+                }
+
                 val body = if (cppReturnType != "void") {
                     """
                     auto callResult = $callFunctionName(env, $callFunctionObjParam$callLambdaArgs);
-                    return ConvertToCppType<$cppReturnType>(env, callResult);
+                    return $convertCall;
                     """.trimMargin()
                 } else {
                     "$callFunctionName(env, $callFunctionObjParam$callLambdaArgs);"
@@ -286,5 +311,9 @@ class CppClassProcessorMethod {
             types = cppTypeNames,
             names = jniArgNames.drop(1)
         )
+    }
+
+    fun getRequestedCppHeaders(): List<String> {
+        return requestedIncludeHeaders
     }
 }

@@ -18,7 +18,7 @@ class JArray {
     CppT* getElements() const;
 public:
     JArray(JavaT javaArray, JNIEnv *env) : javaArray(javaArray),
-                                                 env(env) {}
+                                           env(env) {}
 
     JArray(const JArray<CppT, JavaT>&) = delete;
 

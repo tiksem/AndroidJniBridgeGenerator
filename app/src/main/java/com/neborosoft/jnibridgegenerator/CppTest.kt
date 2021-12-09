@@ -9,4 +9,5 @@ interface CppTest {
     fun e(list: IntArray)
     fun g(): String
     fun ffg(l: (Int)->Unit)
+    fun rrr(i: KotlinInterfaceTest)
 }

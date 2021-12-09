@@ -1,3 +1,4 @@
+#include "KotlinInterfaceTest.h"
 #include <jni.h>
 #include "Converters.h"
 #include "CppTest.h"
@@ -51,6 +52,14 @@ Java_com_neborosoft_jnibridgegenerator_CppTestNative_getA(JNIEnv *env, jobject t
     auto* self = reinterpret_cast<CppTest*&>(ptr);
     auto _result = self->getA();
     return ConvertFromCppType<jint>(env, _result);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_neborosoft_jnibridgegenerator_CppTestNative_rrr(JNIEnv *env, jobject thiz, jlong ptr, jobject i) {
+    KotlinInterfaceTest _i = KotlinInterfaceTest(env, i);   
+    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    self->rrr(_i);
 }
 
 extern "C"

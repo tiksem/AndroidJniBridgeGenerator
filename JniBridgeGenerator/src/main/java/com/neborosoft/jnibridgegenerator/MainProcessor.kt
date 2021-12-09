@@ -5,6 +5,7 @@ import com.neborosoft.annotations.CppAccessibleInterface
 import com.neborosoft.annotations.CppClass
 import com.neborosoft.jnibridgegenerator.processors.CppAccessibleInterfaceAnnotationProcessor
 import com.neborosoft.jnibridgegenerator.processors.CppClassAnnotationProcessor
+import com.neborosoft.jnibridgegenerator.processors.CppTypeRegistrar
 import com.squareup.kotlinpoet.metadata.*
 import java.io.File
 import java.io.FileOutputStream
@@ -39,6 +40,9 @@ class MainProcessor : AbstractProcessor() {
 
         val lambdaGenerator = LambdaGenerator(kaptKotlinGeneratedDir)
         val processors = arrayOf(
+            CppTypeRegistrar(
+                CppAccessibleInterface::class.java, kaptKotlinGeneratedDir, cppOutputDirectory
+            ),
             CppClassAnnotationProcessor(
                 CppClass::class.java, kaptKotlinGeneratedDir, cppOutputDirectory, lambdaGenerator
             ),
