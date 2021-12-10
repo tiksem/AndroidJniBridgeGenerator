@@ -18,7 +18,12 @@ class CppAccessibleInterfaceAnnotationProcessor(
     private val bridgeInitCalls = ArrayList<String>()
     private val includes = ArrayList<String>()
 
-    override fun processClass(className: String, packageName: String, kmClass: ImmutableKmClass) {
+    override fun processClass(
+        className: String,
+        packageName: String,
+        kmClass: ImmutableKmClass,
+        annotation: Annotation
+    ) {
         val methods = kmClass.functions.map {
             CppKotlinInterfaceWrapperProcessorMethod(it)
         }

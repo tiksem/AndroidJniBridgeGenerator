@@ -1,6 +1,9 @@
 package com.neborosoft.jnibridgegenerator.processors
 
+import com.neborosoft.annotations.CppClass
 import com.neborosoft.jnibridgegenerator.*
+import com.neborosoft.jnibridgegenerator.Constants.INCLUDE_START_TOKEN
+import com.neborosoft.jnibridgegenerator.Constants.JNI_PUBLIC_INTERFACE_TOKEN
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
@@ -41,25 +44,38 @@ class CppClassAnnotationProcessor(
     }
 
     private fun generateCppTemplateHeader(
+        existedClassCode: String?,
         methods: List<CppClassProcessorMethod>,
         includes: String,
-        cppClassName: String
+        cppClassName: String,
+        base: String
     ): String {
         val methodsDeclarations = methods.mapNotNull {
             it.getCppHeaderMethodDeclaration()
         }
 
         val cppTemplate = readResource(Constants.CPP_TEMPLATE_H)
-        val index = cppTemplate.indexOf(Constants.JNI_PUBLIC_INTERFACE_TOKEN)
         val code = methodsDeclarations.joinToString("\n") {
             "        $it"
         } + "\n"
 
-        val includeIndex = cppTemplate.indexOf(Constants.INCLUDE_START_TOKEN)
+        val replacement = existedClassCode ?: cppTemplate
 
-        return cppTemplate.insert(index + Constants.JNI_PUBLIC_INTERFACE_TOKEN.length, code)
-            .insert(includeIndex + Constants.INCLUDE_START_TOKEN.length, includes)
-            .replace(Constants.CPP_TEMPLATE_CLASS_NAME, cppClassName)
+        return replacement.replaceStringBetweenTokens(
+            token1 = JNI_PUBLIC_INTERFACE_TOKEN,
+            token2 = JNI_PUBLIC_INTERFACE_TOKEN,
+            replacement = code
+        ).replaceStringBetweenTokens(
+            token1 = INCLUDE_START_TOKEN,
+            token2 = INCLUDE_START_TOKEN,
+            replacement = includes
+        ).replace(Constants.CPP_TEMPLATE_CLASS_NAME, cppClassName)
+            .replaceStringBetweenTokens(
+                token1 = ": public ",
+                token2 = " ",
+                base,
+                replaceTokens = base.isEmpty()
+            )
     }
 
     private fun generateJNIBridgeCalls(
@@ -87,7 +103,14 @@ class CppClassAnnotationProcessor(
         """.trimMargin()
     }
 
-    override fun processClass(className: String, packageName: String, kmClass: ImmutableKmClass) {
+    override fun processClass(
+        className: String,
+        packageName: String,
+        kmClass: ImmutableKmClass,
+        annotation: Annotation
+    ) {
+        require(annotation is CppClass)
+
         val kotlinClassName = className + Constants.KOTLIN_CLASS_IMPLEMENTATION_POSTFIX
 
         val methods = mutableListOf(
@@ -115,21 +138,29 @@ class CppClassAnnotationProcessor(
             methods = methods
         )
 
-        val headers = methods.flatMap {
+        var headersList = methods.flatMap {
             it.getRequestedCppHeaders()
-        }.distinct().joinToString("\n") {
+        }
+
+        if (annotation.base.isNotEmpty()) {
+            headersList = headersList.withPrependedItem(annotation.base)
+        }
+
+        val headers = headersList.distinct().joinToString("\n") {
             "#include \"$it.h\""
         } + "\n"
 
         val jniCppFile = File(cppOutputDirectory, "$className.jni.cpp")
         jniCppFile.writeText(headers + jniCode)
 
+        val cppFile = File(cppOutputDirectory, "$className.h")
         val cppClass = generateCppTemplateHeader(
             methods = methods,
             cppClassName = className,
-            includes = headers
+            includes = headers,
+            base = annotation.base,
+            existedClassCode = cppFile.tryReadText()
         )
-        val cppFile = File(cppOutputDirectory, "$className.h")
         cppFile.writeText(cppClass)
     }
 }

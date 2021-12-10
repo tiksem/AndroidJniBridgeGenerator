@@ -1,9 +1,11 @@
 package com.neborosoft.jnibridgegenerator
 
+import com.neborosoft.annotations.CppMethod
 import com.neborosoft.jnibridgegenerator.Constants.PTR
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmFunction
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
+import com.squareup.kotlinpoet.metadata.hasAnnotations
 
 enum class SpecialMethod {
     RELEASE,
@@ -22,6 +24,7 @@ class CppClassProcessorMethod {
     private val cppReturnType: String
     private val requestedIncludeHeaders = ArrayList<String>()
     private val methodName: String
+    private val shouldGenerateHeaderDeclaration: Boolean
     private lateinit var lambdaGenerator: LambdaGenerator
 
     constructor(specialMethod: SpecialMethod) {
@@ -69,6 +72,7 @@ class CppClassProcessorMethod {
         cppTypeNames = listOf()
         lambdas = listOf()
         cppReturnType = ""
+        shouldGenerateHeaderDeclaration = false
     }
 
     constructor(kmFunction: ImmutableKmFunction, lambdaGenerator: LambdaGenerator) {
@@ -136,6 +140,9 @@ class CppClassProcessorMethod {
         jniCallReturnType = kmFunction.returnType.getTypeName().getJniTypeName()
         cppReturnType = kmFunction.returnType.getCppTypeName(convertFromCppToJni = true)
         methodName = kmFunction.name
+
+        shouldGenerateHeaderDeclaration = kmFunction.returnType.annotations
+            .filterIsInstance<CppMethod>().elementAtOrNull(0)?.skipHeaderGeneration?.not() ?: true
     }
 
     fun getKotlinSpecs(): List<FunSpec> {
@@ -301,7 +308,7 @@ class CppClassProcessorMethod {
     }
 
     fun getCppHeaderMethodDeclaration(): String? {
-        if (specialMethod != null) {
+        if (!shouldGenerateHeaderDeclaration) {
             return null
         }
 

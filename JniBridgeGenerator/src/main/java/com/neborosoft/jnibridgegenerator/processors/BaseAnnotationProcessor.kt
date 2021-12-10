@@ -1,7 +1,6 @@
 package com.neborosoft.jnibridgegenerator.processors
 
 import com.neborosoft.jnibridgegenerator.Utils
-import com.neborosoft.jnibridgegenerator.readIntoString
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import com.squareup.kotlinpoet.metadata.toImmutableKmClass
@@ -32,11 +31,11 @@ abstract class BaseAnnotationProcessor(
                 "invalid $className, should be interface"
             }
 
-            processClass(className, packageName, kmClass)
+            processClass(className, packageName, kmClass, element.getAnnotation(annotation))
         }
     }
 
     protected abstract fun processClass(
-        className: String, packageName: String, kmClass: ImmutableKmClass
+        className: String, packageName: String, kmClass: ImmutableKmClass, annotation: Annotation
     )
 }
