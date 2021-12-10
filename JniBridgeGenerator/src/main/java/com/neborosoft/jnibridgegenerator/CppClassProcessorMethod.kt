@@ -179,13 +179,13 @@ class CppClassProcessorMethod {
             val lambda = lambdas[index]
             if (lambda == null) {
                 val convertCall = if (TypesMapping.isCppTypeRegistered(noRefCppTypeName)) {
-                    "$noRefCppTypeName(env, $paramName)"
+                    "(env, $paramName)"
                 } else {
-                    "ConvertToCppType<$noRefCppTypeName>(env, $paramName)"
+                    " = ConvertToCppType<$noRefCppTypeName>(env, $paramName)"
                 }
 
                 """
-                |    $noRefCppTypeName $convertedParamName = $convertCall;   
+                |    $noRefCppTypeName $convertedParamName$convertCall;   
                 """.trimMargin()
             } else {
                 val cppTypeNames = lambda.parameters.map {
