@@ -1,5 +1,6 @@
 package com.neborosoft.jnibridgegenerator.processors
 
+import com.neborosoft.annotations.CppAccessibleInterface
 import com.neborosoft.jnibridgegenerator.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
@@ -24,19 +25,26 @@ class CppAccessibleInterfaceAnnotationProcessor(
         kmClass: ImmutableKmClass,
         annotation: Annotation
     ) {
+        require(annotation is CppAccessibleInterface)
+
         val methods = kmClass.functions.map {
             CppKotlinInterfaceWrapperProcessorMethod(it)
         }
 
+        var customPath = annotation.customPath
+        if (customPath.isNotEmpty()) {
+            customPath = customPath.removeSuffix("/") + "/"
+        }
+
         val header = generateJObjectTemplateHeader(className, methods)
-        File(cppOutputDirectory, "$className.h").writeText(header)
+        File(cppOutputDirectory, "$customPath$className.h").writeText(header)
 
         val cpp = generateJObjectTemplateCpp(
             cppClassName = className,
             kotlinJniClassName = kmClass.name,
             methods = methods
         )
-        File(cppOutputDirectory, "$className.cpp").writeText(cpp)
+        File(cppOutputDirectory, "$customPath$className.cpp").writeText(cpp)
 
         bridgeInitCalls.add("    $className::init(env);\n")
         includes.add("#include \"$className.h\"\n")

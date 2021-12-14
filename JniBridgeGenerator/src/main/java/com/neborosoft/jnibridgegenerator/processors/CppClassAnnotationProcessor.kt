@@ -150,10 +150,15 @@ class CppClassAnnotationProcessor(
             "#include \"$it.h\""
         } + "\n"
 
-        val jniCppFile = File(cppOutputDirectory, "$className.jni.cpp")
+        var customPath = annotation.customPath
+        if (customPath.isNotEmpty()) {
+            customPath = customPath.removeSuffix("/") + "/"
+        }
+
+        val jniCppFile = File(cppOutputDirectory, "$customPath$className.jni.cpp")
         jniCppFile.writeText(headers + jniCode)
 
-        val cppFile = File(cppOutputDirectory, "$className.h")
+        val cppFile = File(cppOutputDirectory, "$customPath$className.h")
         val cppClass = generateCppTemplateHeader(
             methods = methods,
             cppClassName = className,
