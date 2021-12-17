@@ -39,7 +39,7 @@ fun String.replaceStringBetweenTokens(token1: String,
                                       replacement: String,
                                       replaceTokens: Boolean = false): String {
     var index1 = indexOf(token1)
-    var index2 = indexOf(token2, index1)
+    var index2 = indexOf(token2, index1 + token1.length)
 
     if (replaceTokens) {
         index2 += token2.length

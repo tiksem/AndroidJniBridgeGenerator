@@ -158,7 +158,7 @@ class CppClassProcessorMethod {
         requestedIncludeHeaders.addAll(cppTypes.map {
             it.removeConstReferenceFromCppType()
         }.filter {
-            TypesMapping.isCppTypeRegistered(it)
+            TypesMapping.isCppTypeRegistered(cppTypeName = it)
         })
     }
 

@@ -36,18 +36,19 @@ class CppAccessibleInterfaceAnnotationProcessor(
             customPath = customPath.removeSuffix("/") + "/"
         }
 
-        val header = generateJObjectTemplateHeader(className, methods)
-        File(cppOutputDirectory, "$customPath$className.h").writeText(header)
+        val cppClassName = annotation.cppClassName.takeIf { it.isNotEmpty() } ?: className
+        val header = generateJObjectTemplateHeader(cppClassName, methods)
+        File(cppOutputDirectory, "$customPath$cppClassName.h").writeText(header)
 
         val cpp = generateJObjectTemplateCpp(
-            cppClassName = className,
+            cppClassName = cppClassName,
             kotlinJniClassName = kmClass.name,
             methods = methods
         )
-        File(cppOutputDirectory, "$customPath$className.cpp").writeText(cpp)
+        File(cppOutputDirectory, "$customPath$cppClassName.cpp").writeText(cpp)
 
-        bridgeInitCalls.add("    $className::init(env);\n")
-        includes.add("#include \"$className.h\"\n")
+        bridgeInitCalls.add("    $cppClassName::init(env);\n")
+        includes.add("#include \"$cppClassName.h\"\n")
     }
 
     override fun process(processingEnv: ProcessingEnvironment, roundEnv: RoundEnvironment?) {

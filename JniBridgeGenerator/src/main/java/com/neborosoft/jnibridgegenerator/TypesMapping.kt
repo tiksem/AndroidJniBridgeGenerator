@@ -1,5 +1,8 @@
 package com.neborosoft.jnibridgegenerator
 
+import com.google.common.collect.BiMap
+import com.google.common.collect.HashBiMap
+
 private val DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING_FROM_JNI_TO_CPP  = mapOf(
     "Unit" to "void",
     "Byte" to "int8_t",
@@ -9,6 +12,7 @@ private val DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING_FROM_JNI_TO_CPP  = mapOf(
     "Float" to "float",
     "Double" to "double",
     "Boolean" to "bool",
+    "Char" to "char16_t",
     "BooleanArray" to "JBooleanArray",
     "ByteArray" to "JByteArray",
     "ShortArray" to "JShortArray",
@@ -28,6 +32,7 @@ private val DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING_FROM_CPP_TO_JNI  = mapOf(
     "Float" to "float",
     "Double" to "double",
     "Boolean" to "bool",
+    "Char" to "jchar",
     "ByteArray" to "std::string",
     "BooleanArray" to "std::vector<bool>",
     "ShortArray" to "std::vector<int16_t>",
@@ -47,6 +52,7 @@ private val KOTLIN_TO_JNI_TYPES_MAPPING = mapOf(
     "Float" to "jfloat",
     "Double" to "jdouble",
     "Boolean" to "jboolean",
+    "Char" to "char16_t",
     "ByteArray" to "jbyteArray",
     "ShortArray" to "jshortArray",
     "IntArray" to "jintArray",
@@ -74,7 +80,7 @@ private val JNI_SIGNATURE_MAPPING = mapOf(
 )
 
 object TypesMapping {
-    private val registeredCppTypesMapping = HashSet<String>()
+    private val registeredCppTypesMapping = HashBiMap.create<String, String>()
 
     fun getCppTypeName(kotlinTypeName: String, fromJniToCpp: Boolean): String? {
         val map = if (fromJniToCpp) {
@@ -94,19 +100,15 @@ object TypesMapping {
         return KOTLIN_TO_JNI_TYPES_MAPPING[kotlinTypeName] ?: "jobject"
     }
 
-    fun registerCppTypeMapping(typeName: String) {
-        registeredCppTypesMapping.add(typeName)
+    fun registerCppTypeMapping(kotlinTypeName: String, cppTypeName: String) {
+        registeredCppTypesMapping[kotlinTypeName] = cppTypeName
     }
 
-    fun isCppTypeRegistered(kotlinTypeName: String): Boolean {
-        return registeredCppTypesMapping.contains(kotlinTypeName)
+    fun isCppTypeRegistered(cppTypeName: String): Boolean {
+        return registeredCppTypesMapping.containsValue(cppTypeName)
     }
 
     fun getRegisteredCppTypeName(kotlinTypeName: String): String? {
-        return if (isCppTypeRegistered(kotlinTypeName)) {
-            kotlinTypeName
-        } else {
-            null
-        }
+        return registeredCppTypesMapping[kotlinTypeName]
     }
 }

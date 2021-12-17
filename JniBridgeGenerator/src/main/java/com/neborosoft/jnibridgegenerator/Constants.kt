@@ -4,7 +4,7 @@ object Constants {
     const val CPP_TEMPLATE_H = "CppTemplate.h"
     const val J_OBJECT_TEMPLATE_H = "JObjectTemplate.h"
     const val J_OBJECT_TEMPLATE_CPP = "JObjectTemplate.cpp"
-    const val JNI_PUBLIC_INTERFACE_TOKEN = "// Public Jni Interface\n"
+    const val JNI_PUBLIC_INTERFACE_TOKEN = "    // Public Jni Interface\n"
     const val INCLUDE_START_TOKEN = "// headers\n"
     const val JAVA_METHOD_WRAPPERS_TOKEN = "// Java method wrappers\n"
     const val JAVA_WRAPPER_METHODS_ID_DECLARATION_TOKEN = "// Method ides declaration\n"

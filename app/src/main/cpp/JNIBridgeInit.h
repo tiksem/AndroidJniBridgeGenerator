@@ -6,13 +6,13 @@
 #define JNIBRIDGEGENERATOR_JNIBRIDGEINIT_H
 
 #include <jni.h>
-#include "KotlinInterfaceTest.h"
+#include "KotlinClass.h"
 #include "FunctionCallsBridge.h"
 
 void JNIBridgeInit(JNIEnv* env) {
     InitFunctionsCallBridge(env);
 // Register JObjects
-    KotlinInterfaceTest::init(env);
+    KotlinClass::init(env);
 // Register JObjects
 }
 

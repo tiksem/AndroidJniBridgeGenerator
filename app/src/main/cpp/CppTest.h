@@ -9,7 +9,7 @@
 #include "JString.h"
 #include <string>
 // headers
-#include "KotlinInterfaceTest.h"
+#include "KotlinClass.h"
 // headers
 
 class CppTest {
@@ -19,7 +19,7 @@ public:
         void ffg(const std::function<void(int32_t)>& l);
         std::string g();
         int32_t getA();
-        void rrr(KotlinInterfaceTest i);
+        void rrr(KotlinClass i);
         void yo(const JString& value);
     // Public Jni Interface
 };

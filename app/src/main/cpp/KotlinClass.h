@@ -10,11 +10,11 @@
 #include <vector>
 #include "JObject.h"
 
-class KotlinInterfaceTest : public JObject {
+class KotlinClass : public JObject {
 public:
     static void init(JNIEnv* env);
 
-    KotlinInterfaceTest(JNIEnv *env, jobject obj);
+    KotlinClass(JNIEnv *env, jobject obj);
 
     // Java method wrappers
     void d(int32_t e);
