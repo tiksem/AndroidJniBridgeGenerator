@@ -31,7 +31,7 @@ class CppAccessibleInterfaceAnnotationProcessor(
         require(annotation is CppAccessibleInterface)
 
         val methods = kmClass.functions.mapNotNull {
-            if (it.isExternal && (!kmClass.isObject || it.name != "nativeInit")) {
+            if (it.isExternal && (!annotation.isSingleton || it.name != "nativeInit")) {
                 RegularCppMethodGenerator(
                     kmFunction = it,
                     lambdaGenerator = LambdaGenerator(kaptKotlinGeneratedDir),
@@ -44,13 +44,17 @@ class CppAccessibleInterfaceAnnotationProcessor(
             }
         }
 
-        if (kmClass.isObject) {
+        if (annotation.isSingleton) {
+            require(kmClass.isObject) {
+                throw IllegalStateException("$className Singleton should be object")
+            }
+
             val nativeInitMethod = kmClass.functions.find {
                 it.name == "nativeInit"
             }
 
             require(nativeInitMethod != null) {
-                throw IllegalStateException("$className is object and should contain nativeInit method")
+                throw IllegalStateException("$className should contain nativeInit method, cause it's singleton")
             }
 
             require(nativeInitMethod.isExternal) {
@@ -67,7 +71,7 @@ class CppAccessibleInterfaceAnnotationProcessor(
         val header = generateJObjectTemplateHeader(
             cppClassName = cppClassName,
             methods = methods,
-            isObject = kmClass.isObject
+            isSingleton = annotation.isSingleton
         )
         File(cppOutputDirectory, "$customPath$cppClassName.h").writeText(header)
 
@@ -75,13 +79,13 @@ class CppAccessibleInterfaceAnnotationProcessor(
             cppClassName = cppClassName,
             kotlinClassName = className,
             kotlinJniClassName = kmClass.name,
-            isObject = kmClass.isObject,
+            isSingleton = annotation.isSingleton,
             packageName = packageName,
             methods = methods
         )
         File(cppOutputDirectory, "$customPath$cppClassName.cpp").writeText(cpp)
 
-        if (!kmClass.isObject) {
+        if (!annotation.isSingleton) {
             bridgeInitCalls.add("    $cppClassName::init(env);\n")
         }
         includes.add("#include \"$cppClassName.h\"\n")
@@ -126,10 +130,10 @@ class CppAccessibleInterfaceAnnotationProcessor(
 
     private fun generateJObjectTemplateHeader(
         cppClassName: String,
-        isObject: Boolean,
+        isSingleton: Boolean,
         methods: List<MethodGenerator>
     ): String {
-        val cppTemplate = readResource(if (isObject) {
+        val cppTemplate = readResource(if (isSingleton) {
             Constants.J_OBJECT_SINGLETON_TEMPLATE_H
         } else {
             Constants.J_OBJECT_TEMPLATE_H
@@ -143,7 +147,7 @@ class CppAccessibleInterfaceAnnotationProcessor(
         var res = cppTemplate
             .insert(index + Constants.JAVA_METHOD_WRAPPERS_TOKEN.length, code)
 
-        if (isObject) {
+        if (isSingleton) {
             res = res.replace("JObjectSingletonTemplate", cppClassName)
         } else {
             res = res.replace("JObjectTemplate", cppClassName)
@@ -156,11 +160,11 @@ class CppAccessibleInterfaceAnnotationProcessor(
         cppClassName: String,
         kotlinClassName: String,
         kotlinJniClassName: String,
-        isObject: Boolean,
+        isSingleton: Boolean,
         packageName: String,
         methods: List<MethodGenerator>
     ): String {
-        val cppTemplate = readResource(if (isObject) {
+        val cppTemplate = readResource(if (isSingleton) {
             Constants.J_OBJECT_SINGLETON_TEMPLATE_CPP
         } else {
             Constants.J_OBJECT_TEMPLATE_CPP
@@ -190,7 +194,7 @@ class CppAccessibleInterfaceAnnotationProcessor(
             .replace(methodsIdDeclarationTemplate, idDeclaration)
             .replace("classname", kotlinJniClassName)
 
-        if (isObject) {
+        if (isSingleton) {
             val modifiedPackageName = packageName.replace('.', '_')
             res = res.replace("JniInitCall", "Java_${modifiedPackageName}_${kotlinClassName}_nativeInit")
             res = res.replace("JObjectSingletonTemplate", cppClassName)
