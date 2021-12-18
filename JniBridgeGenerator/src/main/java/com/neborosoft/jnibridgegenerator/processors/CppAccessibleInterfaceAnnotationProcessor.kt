@@ -31,16 +31,24 @@ class CppAccessibleInterfaceAnnotationProcessor(
         require(annotation is CppAccessibleInterface)
 
         val methods = kmClass.functions.mapNotNull {
-            if (it.isExternal && (!annotation.isSingleton || it.name != "nativeInit")) {
-                RegularCppMethodGenerator(
-                    kmFunction = it,
-                    lambdaGenerator = LambdaGenerator(kaptKotlinGeneratedDir),
-                    generateCppPtr = false
-                )
-            } else if(!it.isPrivate) {
-                KotlinMethodGenerator(it)
-            } else {
-                null
+            when {
+                it.returnType.annotations.find {
+                    it.className.endsWith("SkipMethod")
+                } != null -> null
+
+                it.isExternal && (!annotation.isSingleton || it.name != "nativeInit") -> {
+                    RegularCppMethodGenerator(
+                        kmFunction = it,
+                        lambdaGenerator = LambdaGenerator(kaptKotlinGeneratedDir),
+                        generateCppPtr = false
+                    )
+                }
+
+                !it.isPrivate -> {
+                    KotlinMethodGenerator(it)
+                }
+
+                else -> null
             }
         }
 
