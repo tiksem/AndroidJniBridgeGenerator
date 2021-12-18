@@ -1,86 +1,65 @@
-package com.neborosoft.jnibridgegenerator
+package com.neborosoft.jnibridgegenerator.methods
 
 import com.neborosoft.annotations.CppMethod
+import com.neborosoft.jnibridgegenerator.*
 import com.neborosoft.jnibridgegenerator.Constants.PTR
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmFunction
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
-import com.squareup.kotlinpoet.metadata.hasAnnotations
-
-enum class SpecialMethod {
-    RELEASE,
-    NEW_INSTANCE
-}
 
 @KotlinPoetMetadataPreview
-class CppClassProcessorMethod {
-    private val kotlinSpecs: List<FunSpec>
-    private val jniTypes: List<String>
-    private val jniArgNames: List<String>
-    private val cppTypeNames: List<String>
-    private val lambdas: List<LambdaTypeName?>
-    private val specialMethod: SpecialMethod?
-    private val jniCallReturnType: String
-    private val cppReturnType: String
+class RegularCppMethodGenerator(
+    private val kmFunction: ImmutableKmFunction,
+    private val lambdaGenerator: LambdaGenerator,
+    private val generateCppPtr: Boolean
+): CppMethodGenerator {
     private val requestedIncludeHeaders = ArrayList<String>()
-    private val methodName: String
-    private val shouldGenerateHeaderDeclaration: Boolean
-    private lateinit var lambdaGenerator: LambdaGenerator
 
-    constructor(specialMethod: SpecialMethod) {
-        this.specialMethod = specialMethod
-        when (specialMethod) {
-            SpecialMethod.RELEASE -> {
-                methodName = "release"
-                kotlinSpecs = listOf(
-                    FunSpec.builder(methodName)
-                        .addModifiers(KModifier.PRIVATE, KModifier.EXTERNAL)
-                        .addParameters(
-                            parameterSpecs = listOf(ParameterSpec(
-                                name = PTR,
-                                type = LONG
-                            ))
-                        ).build(),
-                    FunSpec.builder("finalize")
-                        .addModifiers(KModifier.PROTECTED)
-                        .addStatement("release()")
-                        .build(),
-                    FunSpec.builder(methodName)
-                        .addStatement("release($PTR)")
-                        .addStatement("$PTR = 0")
-                        .build()
-                )
-
-                jniTypes = listOf("jlong")
-                jniCallReturnType = "void"
-                jniArgNames = listOf(PTR)
-            }
-            SpecialMethod.NEW_INSTANCE -> {
-                methodName = "newInstance"
-                kotlinSpecs = listOf(
-                    FunSpec.builder(methodName)
-                        .addModifiers(KModifier.PRIVATE, KModifier.EXTERNAL)
-                        .returns(LONG)
-                        .build(),
-                )
-
-                jniTypes = listOf()
-                jniCallReturnType = "jlong"
-                jniArgNames = listOf()
-            }
-        }
-        cppTypeNames = listOf()
-        lambdas = listOf()
-        cppReturnType = ""
-        shouldGenerateHeaderDeclaration = false
+    private val cppReturnType by lazy {
+        kmFunction.returnType.getCppTypeName(convertFromCppToJni = true)
     }
 
-    constructor(kmFunction: ImmutableKmFunction, lambdaGenerator: LambdaGenerator) {
-        this.specialMethod = null
-        this.lambdaGenerator = lambdaGenerator
+    private val cppTypeNames by lazy {
+        kmFunction.valueParameters.map {
+            it.type!!.getCppTypeName(convertFromCppToJni = false)
+                .addConstReferenceToCppTypeNameIfRequired()
+        }
+    }
+
+    private val jniTypes by lazy {
+        val res = kmFunction.valueParameters.map {
+            it.type?.getTypeName().getJniTypeName()
+        }
+        if (generateCppPtr) {
+            res.withPrependedItem("jlong")
+        } else {
+            res
+        }
+    }
+
+    private val jniArgNames by lazy {
+        val res = kmFunction.valueParameters.map {
+            it.name
+        }
+        if (generateCppPtr) {
+            res.withPrependedItem(PTR)
+        } else {
+            res
+        }
+    }
+
+    private val jniCallReturnType by lazy {
+        kmFunction.returnType.getTypeName().getJniTypeName()
+    }
+
+    override fun getKotlinSpecs(): List<FunSpec> {
+        require(generateCppPtr) {
+            throw UnsupportedOperationException(
+                "getKotlinSpecs is not supported for getKotlinSpecs = false"
+            )
+        }
 
         val callArgsList = arrayListOf(PTR)
-
         val baseParameterSpecs = kmFunction.valueParameters.map { p ->
             callArgsList.add(p.name)
             ParameterSpec(
@@ -95,12 +74,6 @@ class CppClassProcessorMethod {
             )
         }
 
-        lambdas = kmFunction.valueParameters.map {
-            it.type?.getTypeName() as? LambdaTypeName
-        }
-
-        val callArgs = callArgsList.joinToString(", ")
-
         val nativeParameters = baseParameterSpecs.withPrependedItem(
             ParameterSpec(
                 name = PTR,
@@ -108,22 +81,14 @@ class CppClassProcessorMethod {
             )
         )
 
-        jniArgNames = nativeParameters.map {
-            it.name
-        }
-
-        jniTypes = nativeParameters.map {
-            it.type.getJniTypeName()
-        }
-
+        val callArgs = callArgsList.joinToString(", ")
         val nativeFun = FunSpec.builder(kmFunction.name)
             .addParameters(
                 parameterSpecs = nativeParameters
             ).addModifiers(KModifier.EXTERNAL, KModifier.PRIVATE)
             .returns(kmFunction.returnType.getTypeName())
             .build()
-
-        kotlinSpecs = listOf(
+        return listOf(
             FunSpec.builder(kmFunction.name)
                 .addParameters(parameterSpecs = baseParameterSpecs)
                 .addStatement("return ${kmFunction.name}($callArgs)")
@@ -131,22 +96,6 @@ class CppClassProcessorMethod {
                 .build(),
             nativeFun
         )
-
-        cppTypeNames = kmFunction.valueParameters.map {
-            it.type!!.getCppTypeName(convertFromCppToJni = false)
-                .addConstReferenceToCppTypeNameIfRequired()
-        }
-
-        jniCallReturnType = kmFunction.returnType.getTypeName().getJniTypeName()
-        cppReturnType = kmFunction.returnType.getCppTypeName(convertFromCppToJni = true)
-        methodName = kmFunction.name
-
-        shouldGenerateHeaderDeclaration = kmFunction.returnType.annotations
-            .filterIsInstance<CppMethod>().elementAtOrNull(0)?.skipHeaderGeneration?.not() ?: true
-    }
-
-    fun getKotlinSpecs(): List<FunSpec> {
-        return kotlinSpecs
     }
 
     private data class Converters(
@@ -247,80 +196,73 @@ class CppClassProcessorMethod {
         return Converters(code, args = cppCallArgsList.joinToString(", "))
     }
 
-    fun getJniMethodCall(
+    override fun getJniMethodCall(
         packageName: String,
         kotlinClassName: String,
         cppClassName: String
     ): String {
         val jniPackageName = packageName.replace('.', '_')
 
-        if (specialMethod == SpecialMethod.NEW_INSTANCE) {
-            return """
-            |extern "C"
-            |JNIEXPORT $jniCallReturnType JNICALL
-            |Java_${jniPackageName}_${kotlinClassName}_${methodName}(JNIEnv *env, jobject thiz) {
-            |    return reinterpret_cast<$jniCallReturnType>(new $cppClassName());
-            |}
-            """.trimMargin()
-        } else if (specialMethod == SpecialMethod.RELEASE) {
-            return """
-            |extern "C"
-            |JNIEXPORT $jniCallReturnType JNICALL
-            |Java_${jniPackageName}_${kotlinClassName}_${methodName}(JNIEnv *env, jobject thiz, jlong ptr) {
-            |    delete reinterpret_cast<$cppClassName*&>(ptr);
-            |}
-            """.trimMargin()
-        }
-
         val jniCallArgsList = mutableListOf("JNIEnv *env", "jobject thiz")
         (jniTypes zip jniArgNames).mapTo(jniCallArgsList) {
             it.first + " " + it.second
         }
         val jniCallArgs = jniCallArgsList.joinToString(", ")
-        val converters = if (specialMethod == null) {
-            generateToCppParamConverters(
-                cppTypeNames = cppTypeNames,
-                unconvertedParamNames = jniArgNames.shifted(1),
-                lambdas = lambdas
-            )
-        } else {
-            Converters(code = "", args = "")
-        }
+        val converters = generateToCppParamConverters(
+            cppTypeNames = cppTypeNames,
+            unconvertedParamNames = jniArgNames.shifted(1),
+            lambdas = kmFunction.valueParameters.map {
+                it.type?.getTypeName() as? LambdaTypeName
+            }
+        )
 
         val ending = if (cppReturnType.isEmpty() || cppReturnType == "void") {
-            "|    self->$methodName(${converters.args});"
+            "|    self->${kmFunction.name}(${converters.args});"
         } else {
             """
-            |    auto _result = self->$methodName(${converters.args});
+            |    auto _result = self->${kmFunction.name}(${converters.args});
             |    return ConvertFromCppType<$jniCallReturnType>(env, _result);
             """.trimMargin()
+        }
+
+        val cast = if (generateCppPtr) {
+            "auto* self = reinterpret_cast<$cppClassName*&>($PTR);"
+        } else {
+            "$cppClassName ___self(env, thiz); auto* self = &___self;"
         }
 
         return """
         |extern "C"
         |JNIEXPORT $jniCallReturnType JNICALL
-        |Java_${jniPackageName}_${kotlinClassName}_${methodName}($jniCallArgs) {
+        |Java_${jniPackageName}_${kotlinClassName}_${kmFunction.name}($jniCallArgs) {
         |${converters.code}
-        |    auto* self = reinterpret_cast<$cppClassName*&>($PTR);
+        |    $cast;
         |$ending
         |}
         """.trimMargin()
     }
 
-    fun getCppHeaderMethodDeclaration(): String? {
+    override fun getCppHeaderMethodDeclaration(): String? {
+        val shouldGenerateHeaderDeclaration = kmFunction.returnType.annotations
+            .filterIsInstance<CppMethod>().elementAtOrNull(0)?.skipHeaderGeneration?.not() ?: true
+
         if (!shouldGenerateHeaderDeclaration) {
             return null
         }
 
         return CodeGenerationUtils.getCppHeaderMethodDeclaration(
-            methodName = methodName,
+            methodName = kmFunction.name,
             returnType = cppReturnType,
             types = cppTypeNames,
-            names = jniArgNames.drop(1)
+            names = if (generateCppPtr) {
+                jniArgNames.drop(1)
+            } else {
+                jniArgNames
+            }
         )
     }
 
-    fun getRequestedCppHeaders(): List<String> {
+    override fun getRequestedCppHeaders(): List<String> {
         return requestedIncludeHeaders
     }
 }

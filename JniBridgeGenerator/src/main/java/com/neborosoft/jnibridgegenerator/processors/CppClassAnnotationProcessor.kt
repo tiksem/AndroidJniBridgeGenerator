@@ -4,6 +4,10 @@ import com.neborosoft.annotations.CppClass
 import com.neborosoft.jnibridgegenerator.*
 import com.neborosoft.jnibridgegenerator.Constants.INCLUDE_START_TOKEN
 import com.neborosoft.jnibridgegenerator.Constants.JNI_PUBLIC_INTERFACE_TOKEN
+import com.neborosoft.jnibridgegenerator.methods.CppMethodGenerator
+import com.neborosoft.jnibridgegenerator.methods.NewInstanceCppMethodGenerator
+import com.neborosoft.jnibridgegenerator.methods.RegularCppMethodGenerator
+import com.neborosoft.jnibridgegenerator.methods.ReleaseCppMethodGenerator
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
@@ -21,7 +25,7 @@ class CppClassAnnotationProcessor(
     cppOutputDirectory
 ) {
     private fun generateKotlinClass(
-        methods: List<CppClassProcessorMethod>,
+        methods: List<CppMethodGenerator>,
         packageName: String,
         kotlinClassName: String,
     ): FileSpec {
@@ -45,7 +49,7 @@ class CppClassAnnotationProcessor(
 
     private fun generateCppTemplateHeader(
         existedClassCode: String?,
-        methods: List<CppClassProcessorMethod>,
+        methods: List<CppMethodGenerator>,
         includes: String,
         cppClassName: String,
         base: String
@@ -78,31 +82,6 @@ class CppClassAnnotationProcessor(
             )
     }
 
-    private fun generateJNIBridgeCalls(
-        packageName: String,
-        cppName: String,
-        kotlinName: String,
-        methods: List<CppClassProcessorMethod>
-    ): String {
-        val methodsCode = methods.map {
-            it.getJniMethodCall(
-                packageName = packageName,
-                kotlinClassName = kotlinName,
-                cppClassName = cppName
-            )
-        }.joinToString("\n\n")
-
-        return """
-        |#include <jni.h>
-        |#include "Converters.h"
-        |#include "$cppName.h"
-        |#include "FunctionCallsBridge.h"
-        
-        |$methodsCode
-            
-        """.trimMargin()
-    }
-
     override fun processClass(
         className: String,
         packageName: String,
@@ -111,15 +90,19 @@ class CppClassAnnotationProcessor(
     ) {
         require(annotation is CppClass)
 
+        require(kmClass.constructors.isEmpty()) {
+            "@CppClass processor failed. Invalid $className, should be interface"
+        }
+
         val kotlinClassName = className + Constants.KOTLIN_CLASS_IMPLEMENTATION_POSTFIX
 
-        val methods = mutableListOf(
-            CppClassProcessorMethod(SpecialMethod.NEW_INSTANCE),
-            CppClassProcessorMethod(SpecialMethod.RELEASE)
+        val methods = mutableListOf<CppMethodGenerator>(
+            NewInstanceCppMethodGenerator(),
+            ReleaseCppMethodGenerator()
         )
 
         kmClass.functions.mapTo(methods) {
-            CppClassProcessorMethod(it, lambdaGenerator)
+            RegularCppMethodGenerator(it, lambdaGenerator, generateCppPtr = true)
         }
 
         val kotlinFile = File(kaptKotlinGeneratedDir)

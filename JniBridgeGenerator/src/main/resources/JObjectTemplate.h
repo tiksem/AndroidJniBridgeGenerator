@@ -2,8 +2,8 @@
 // Created by Semyon Tikhonenko on 12/3/21.
 //
 
-#ifndef JNIBRIDGEGENERATOR_JOBJECTTEMPLATE_H
-#define JNIBRIDGEGENERATOR_JOBJECTTEMPLATE_H
+#ifndef JNIBRIDGEGENERATOR_JObjectTemplate_H
+#define JNIBRIDGEGENERATOR_JObjectTemplate_H
 
 #include <jni.h>
 #include <string>

@@ -1,12 +1,13 @@
-package com.neborosoft.jnibridgegenerator
+package com.neborosoft.jnibridgegenerator.methods
 
+import com.neborosoft.jnibridgegenerator.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmFunction
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 
 @KotlinPoetMetadataPreview
-class CppKotlinInterfaceWrapperProcessorMethod(
+class KotlinMethodGenerator(
     private val kmFunction: ImmutableKmFunction
-) {
+): MethodGenerator {
     private val cppReturnType: String
     private val jniReturnType: String
     private val cppTypes: List<String>
@@ -28,7 +29,7 @@ class CppKotlinInterfaceWrapperProcessorMethod(
         }
     }
 
-    fun getHeaderDeclaration(): String {
+    override fun getCppHeaderMethodDeclaration(): String {
         return CodeGenerationUtils.getCppHeaderMethodDeclaration(
             methodName = kmFunction.name,
             returnType = cppReturnType,
@@ -37,7 +38,7 @@ class CppKotlinInterfaceWrapperProcessorMethod(
         )
     }
 
-    fun getSourceDeclaration(template: String): String {
+    override fun getSourceDeclaration(template: String): String {
         val jniCallArgsList = ArrayList<String>()
 
         val converters = jniTypes.mapIndexed { index, type ->
@@ -81,13 +82,13 @@ class CppKotlinInterfaceWrapperProcessorMethod(
             .replace("converters", converters)
     }
 
-    fun getMethodIdGeneration(template: String): String {
+    override fun getMethodIdGeneration(template: String): String {
         return template
             .replace("methodName", kmFunction.name)
             .replace("jvmSignature", getJvmSignature())
     }
 
-    fun getMethodIdDeclaration(template: String): String {
+    override fun getMethodIdDeclaration(template: String): String {
         return template.replace("methodName", kmFunction.name)
     }
 

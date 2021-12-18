@@ -44,3 +44,13 @@ fun <T> List<T>.shifted(by: Int): List<T> {
         }
     }
 }
+
+fun <T> List<T>.removeFirstIfEquals(item: T): List<T> {
+    return if (isEmpty()) {
+        this
+    } else if(first() == item) {
+        shifted(1)
+    } else {
+        this
+    }
+}

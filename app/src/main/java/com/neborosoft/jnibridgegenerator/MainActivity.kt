@@ -14,6 +14,11 @@ class MainActivity : AppCompatActivity() {
         cpp.ffg {
             Log.d("MainActivity", it.toString())
         }
+        Singleton.nativeInit()
+        cpp.getA()
+
+        val k = KotlinInterfaceTest()
+        Log.d("MainActivity", k.bbbbbgggg().joinToString(", "))
     }
 
     external fun eee(ptr: Long)

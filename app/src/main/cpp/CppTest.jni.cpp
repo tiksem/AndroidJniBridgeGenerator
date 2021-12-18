@@ -20,7 +20,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_neborosoft_jnibridgegenerator_CppTestNative_e(JNIEnv *env, jobject thiz, jlong ptr, jintArray list) {
     JIntArray _list = ConvertToCppType<JIntArray>(env, list);   
-    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    auto* self = reinterpret_cast<CppTest*&>(ptr);;
     self->e(_list);
 }
 
@@ -32,7 +32,7 @@ Java_com_neborosoft_jnibridgegenerator_CppTestNative_ffg(JNIEnv *env, jobject th
         jint _param0 = ConvertFromCppType<int32_t>(env, param0);   
         CallLambdaFunctionLambdaUnitInt(env, l_obj.getJavaObject(), _param0);   
     };
-    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    auto* self = reinterpret_cast<CppTest*&>(ptr);;
     self->ffg(_l);
 }
 
@@ -40,7 +40,7 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_neborosoft_jnibridgegenerator_CppTestNative_g(JNIEnv *env, jobject thiz, jlong ptr) {
 
-    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    auto* self = reinterpret_cast<CppTest*&>(ptr);;
     auto _result = self->g();
     return ConvertFromCppType<jstring>(env, _result);
 }
@@ -49,7 +49,7 @@ extern "C"
 JNIEXPORT jint JNICALL
 Java_com_neborosoft_jnibridgegenerator_CppTestNative_getA(JNIEnv *env, jobject thiz, jlong ptr) {
 
-    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    auto* self = reinterpret_cast<CppTest*&>(ptr);;
     auto _result = self->getA();
     return ConvertFromCppType<jint>(env, _result);
 }
@@ -58,7 +58,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_neborosoft_jnibridgegenerator_CppTestNative_rrr(JNIEnv *env, jobject thiz, jlong ptr, jobject i) {
     KotlinClass _i(env, i);   
-    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    auto* self = reinterpret_cast<CppTest*&>(ptr);;
     self->rrr(_i);
 }
 
@@ -66,7 +66,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_neborosoft_jnibridgegenerator_CppTestNative_yo(JNIEnv *env, jobject thiz, jlong ptr, jstring value) {
     JString _value = ConvertToCppType<JString>(env, value);   
-    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    auto* self = reinterpret_cast<CppTest*&>(ptr);;
     self->yo(_value);
 }
             

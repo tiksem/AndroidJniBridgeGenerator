@@ -31,7 +31,10 @@ add_library( # Sets the name of the library.
             JObject.cpp
             CppTest.jni.cpp
             CppTest.cpp
+            Singleton.cpp
             KotlinClass.cpp
+            KotlinClass.jni.cpp
+            KotlinClassImpl.cpp
             FunctionCallsBridge.cpp
              jnibridgegenerator.cpp )
 

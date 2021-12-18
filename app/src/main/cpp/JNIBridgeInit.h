@@ -6,6 +6,7 @@
 #define JNIBRIDGEGENERATOR_JNIBRIDGEINIT_H
 
 #include <jni.h>
+#include "Singleton.h"
 #include "KotlinClass.h"
 #include "FunctionCallsBridge.h"
 

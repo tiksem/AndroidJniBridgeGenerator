@@ -3,6 +3,7 @@
 //
 
 #include "CppTest.h"
+#include "Singleton.h"
 
 void CppTest::e(const JIntArray &ptr) {
 
@@ -13,6 +14,7 @@ std::string CppTest::g() {
 }
 
 int32_t CppTest::getA() {
+    Singleton::instance().yo();
     return 35;
 }
 

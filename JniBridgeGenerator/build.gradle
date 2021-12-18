@@ -33,7 +33,7 @@ publishing {
             url = uri("https://maven.pkg.github.com/tiksem/AndroidJniBridgeGenerator")
             credentials {
                 username = "tiksem"
-                password = "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"
+                password = "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"
             }
         }
     }
@@ -41,7 +41,7 @@ publishing {
         gpr(MavenPublication) {
             groupId = 'com.neborosoft'
             artifactId = 'android_jni_bridge_generator'
-            version = '1.0.1'
+            version = '1.0.2'
 
             from(components.java)
         }
