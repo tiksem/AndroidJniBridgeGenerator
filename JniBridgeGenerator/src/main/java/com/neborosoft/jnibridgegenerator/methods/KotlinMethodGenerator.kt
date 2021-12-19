@@ -1,24 +1,33 @@
 package com.neborosoft.jnibridgegenerator.methods
 
+import com.neborosoft.annotations.CppParam
 import com.neborosoft.jnibridgegenerator.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmFunction
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 
 @KotlinPoetMetadataPreview
 class KotlinMethodGenerator(
-    private val kmFunction: ImmutableKmFunction
+    private val kmFunction: ImmutableKmFunction,
+    private val annotationResolver: ClassAnnotationResolver
 ): MethodGenerator {
     private val cppReturnType: String
     private val jniReturnType: String
     private val cppTypes: List<String>
     private val jniTypes: List<String>
     private val names: List<String>
+    private val parameterAnnotationResolver =
+        annotationResolver.getParameterAnnotationResolver(kmFunction)
 
     init {
-        cppReturnType = kmFunction.returnType.getCppTypeName(convertFromCppToJni = true)
+        val cppReturnParam = annotationResolver.getAnnotation(kmFunction, CppParam::class.java)
+        cppReturnType = kmFunction.returnType.getCppTypeName(
+            convertFromCppToJni = true,
+            cppParam = cppReturnParam
+        )
         jniReturnType = kmFunction.returnType.getTypeName().getJniTypeName()
-        cppTypes = kmFunction.valueParameters.map {
-            it.type!!.getCppTypeName(convertFromCppToJni = true)
+        cppTypes = kmFunction.valueParameters.mapIndexed { index, it ->
+            val cppParam = parameterAnnotationResolver.getAnnotation(index, CppParam::class.java)
+            it.type!!.getCppTypeName(convertFromCppToJni = true, cppParam)
                 .addConstReferenceToCppTypeNameIfRequired()
         }
         names = kmFunction.valueParameters.map {

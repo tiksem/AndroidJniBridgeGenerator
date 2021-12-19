@@ -1,27 +1,50 @@
 package com.neborosoft.jnibridgegenerator.methods
 
 import com.neborosoft.annotations.CppMethod
+import com.neborosoft.annotations.CppParam
 import com.neborosoft.jnibridgegenerator.*
 import com.neborosoft.jnibridgegenerator.Constants.PTR
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmFunction
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 
+enum class GenerationPolicy {
+    WITH_CPP_PTR,
+    EXTERNAL_METHOD,
+    EXTERNAL_FUNCTION
+}
+
 @KotlinPoetMetadataPreview
 class RegularCppMethodGenerator(
     private val kmFunction: ImmutableKmFunction,
     private val lambdaGenerator: LambdaGenerator,
-    private val generateCppPtr: Boolean
+    private val generationPolicy: GenerationPolicy,
+    private val annotationResolver: ClassAnnotationResolver
 ): CppMethodGenerator {
+    init {
+        if (generationPolicy != GenerationPolicy.WITH_CPP_PTR) {
+            kmFunction.valueParameters.forEach {
+                if (it.type?.getTypeName() is LambdaTypeName) {
+                    throw UnsupportedOperationException("Lambdas are not supported for external functions")
+                }
+            }
+        }
+    }
+
     private val requestedIncludeHeaders = ArrayList<String>()
+    private val parameterAnnotationResolver = annotationResolver.getParameterAnnotationResolver(kmFunction)
 
     private val cppReturnType by lazy {
-        kmFunction.returnType.getCppTypeName(convertFromCppToJni = true)
+        kmFunction.returnType.getCppTypeName(
+            convertFromCppToJni = true,
+            cppParam = annotationResolver.getAnnotation(kmFunction, CppParam::class.java)
+        )
     }
 
     private val cppTypeNames by lazy {
-        kmFunction.valueParameters.map {
-            it.type!!.getCppTypeName(convertFromCppToJni = false)
+        kmFunction.valueParameters.mapIndexed { index, it ->
+            val cppParam = parameterAnnotationResolver.getAnnotation(index, CppParam::class.java)
+            it.type!!.getCppTypeName(convertFromCppToJni = false, cppParam)
                 .addConstReferenceToCppTypeNameIfRequired()
         }
     }
@@ -30,7 +53,7 @@ class RegularCppMethodGenerator(
         val res = kmFunction.valueParameters.map {
             it.type?.getTypeName().getJniTypeName()
         }
-        if (generateCppPtr) {
+        if (generationPolicy == GenerationPolicy.WITH_CPP_PTR) {
             res.withPrependedItem("jlong")
         } else {
             res
@@ -41,7 +64,7 @@ class RegularCppMethodGenerator(
         val res = kmFunction.valueParameters.map {
             it.name
         }
-        if (generateCppPtr) {
+        if (generationPolicy == GenerationPolicy.WITH_CPP_PTR) {
             res.withPrependedItem(PTR)
         } else {
             res
@@ -53,9 +76,9 @@ class RegularCppMethodGenerator(
     }
 
     override fun getKotlinSpecs(): List<FunSpec> {
-        require(generateCppPtr) {
+        require(generationPolicy == GenerationPolicy.WITH_CPP_PTR) {
             throw UnsupportedOperationException(
-                "getKotlinSpecs is not supported for getKotlinSpecs = false"
+                "getKotlinSpecs is not supported for $generationPolicy"
             )
         }
 
@@ -210,25 +233,41 @@ class RegularCppMethodGenerator(
         val jniCallArgs = jniCallArgsList.joinToString(", ")
         val converters = generateToCppParamConverters(
             cppTypeNames = cppTypeNames,
-            unconvertedParamNames = jniArgNames.shifted(1),
+            unconvertedParamNames = if (generationPolicy == GenerationPolicy.WITH_CPP_PTR) {
+                jniArgNames.shifted(1)
+            } else {
+                jniArgNames
+            },
             lambdas = kmFunction.valueParameters.map {
                 it.type?.getTypeName() as? LambdaTypeName
             }
         )
 
-        val ending = if (cppReturnType.isEmpty() || cppReturnType == "void") {
-            "|    self->${kmFunction.name}(${converters.args});"
-        } else {
-            """
-            |    auto _result = self->${kmFunction.name}(${converters.args});
-            |    return ConvertFromCppType<$jniCallReturnType>(env, _result);
-            """.trimMargin()
+        val cast = when (generationPolicy) {
+            GenerationPolicy.WITH_CPP_PTR -> {
+                "auto* self = reinterpret_cast<$cppClassName*&>($PTR);"
+            }
+            GenerationPolicy.EXTERNAL_METHOD -> {
+                "$cppClassName _self(env, thiz); auto* self = &_self;"
+            }
+            GenerationPolicy.EXTERNAL_FUNCTION -> {
+                ""
+            }
         }
 
-        val cast = if (generateCppPtr) {
-            "auto* self = reinterpret_cast<$cppClassName*&>($PTR);"
+        val self = if (generationPolicy == GenerationPolicy.EXTERNAL_FUNCTION) {
+            "$cppClassName::"
         } else {
-            "$cppClassName ___self(env, thiz); auto* self = &___self;"
+            "self->"
+        }
+
+        val ending = if (cppReturnType.isEmpty() || cppReturnType == "void") {
+            "|    $self${kmFunction.name}(${converters.args});"
+        } else {
+            """
+            |    auto _result = $self${kmFunction.name}(${converters.args});
+            |    return ConvertFromCppType<$jniCallReturnType>(env, _result);
+            """.trimMargin()
         }
 
         return """
@@ -236,15 +275,16 @@ class RegularCppMethodGenerator(
         |JNIEXPORT $jniCallReturnType JNICALL
         |Java_${jniPackageName}_${kotlinClassName}_${kmFunction.name}($jniCallArgs) {
         |${converters.code}
-        |    $cast;
+        |    $cast
         |$ending
         |}
         """.trimMargin()
     }
 
     override fun getCppHeaderMethodDeclaration(): String? {
-        val shouldGenerateHeaderDeclaration = kmFunction.returnType.annotations
-            .filterIsInstance<CppMethod>().elementAtOrNull(0)?.skipHeaderGeneration?.not() ?: true
+        val shouldGenerateHeaderDeclaration = annotationResolver.getAnnotation(
+            kmFunction, CppMethod::class.java
+        ) ?.skipHeaderGeneration?.not() ?: true
 
         if (!shouldGenerateHeaderDeclaration) {
             return null
@@ -254,7 +294,7 @@ class RegularCppMethodGenerator(
             methodName = kmFunction.name,
             returnType = cppReturnType,
             types = cppTypeNames,
-            names = if (generateCppPtr) {
+            names = if (generationPolicy == GenerationPolicy.WITH_CPP_PTR) {
                 jniArgNames.drop(1)
             } else {
                 jniArgNames

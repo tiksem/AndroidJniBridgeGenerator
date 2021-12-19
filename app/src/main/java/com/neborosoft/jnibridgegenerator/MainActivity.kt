@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
 
         val k = KotlinInterfaceTest()
         Log.d("MainActivity", k.bbbbbgggg().joinToString(", "))
+        Log.d("MainActivity", CppFunctionsTest.yo("dsdsds").joinToString(", "))
     }
 
     external fun eee(ptr: Long)

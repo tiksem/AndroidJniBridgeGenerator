@@ -1,7 +1,10 @@
 package com.neborosoft.jnibridgegenerator.processors
 
 import com.neborosoft.annotations.CppAccessibleInterface
+import com.neborosoft.annotations.CppFunction
+import com.neborosoft.annotations.SkipMethod
 import com.neborosoft.jnibridgegenerator.*
+import com.neborosoft.jnibridgegenerator.methods.GenerationPolicy
 import com.neborosoft.jnibridgegenerator.methods.MethodGenerator
 import com.neborosoft.jnibridgegenerator.methods.KotlinMethodGenerator
 import com.neborosoft.jnibridgegenerator.methods.RegularCppMethodGenerator
@@ -15,7 +18,8 @@ import javax.annotation.processing.RoundEnvironment
 class CppAccessibleInterfaceAnnotationProcessor(
     annotation: Class<out Annotation>,
     kaptKotlinGeneratedDir: String,
-    cppOutputDirectory: String
+    cppOutputDirectory: String,
+    private val lambdaGenerator: LambdaGenerator
 ) : BaseAnnotationProcessor(
     annotation, kaptKotlinGeneratedDir, cppOutputDirectory
 ) {
@@ -30,22 +34,51 @@ class CppAccessibleInterfaceAnnotationProcessor(
     ) {
         require(annotation is CppAccessibleInterface)
 
+        val cppFunctions = ArrayList<MethodGenerator>()
         val methods = kmClass.functions.mapNotNull {
-            when {
-                it.returnType.annotations.find {
-                    it.className.endsWith("SkipMethod")
-                } != null -> null
+            val cppFunction =
+                AnnotationsResolver.getAnnotation(kmClass, it, CppFunction::class.java)
 
-                it.isExternal && (!annotation.isSingleton || it.name != "nativeInit") -> {
-                    RegularCppMethodGenerator(
-                        kmFunction = it,
-                        lambdaGenerator = LambdaGenerator(kaptKotlinGeneratedDir),
-                        generateCppPtr = false
+            fun createCppMethodGenerator(generationPolicy: GenerationPolicy): RegularCppMethodGenerator {
+                return RegularCppMethodGenerator(
+                    kmFunction = it,
+                    lambdaGenerator = lambdaGenerator,
+                    generationPolicy = generationPolicy,
+                    annotationResolver = AnnotationsResolver.getClassAnnotationResolver(kmClass)
+                )
+            }
+
+            when {
+                cppFunction != null -> {
+                    if (!it.isExternal) {
+                        throw IllegalStateException("CppFunction ${it.name} should be external")
+                    } else {
+                        cppFunctions.add(
+                            createCppMethodGenerator(
+                                generationPolicy = GenerationPolicy.EXTERNAL_FUNCTION
+                            )
+                        )
+                        null
+                    }
+                }
+
+                AnnotationsResolver.getAnnotation(kmClass, it, SkipMethod::class.java) != null -> {
+                    null
+                }
+
+                it.isExternal && annotation.isSingleton && it.name == "nativeInit" -> null
+
+                it.isExternal -> {
+                    createCppMethodGenerator(
+                        generationPolicy = GenerationPolicy.EXTERNAL_METHOD
                     )
                 }
 
                 !it.isPrivate -> {
-                    KotlinMethodGenerator(it)
+                    KotlinMethodGenerator(
+                        kmFunction = it,
+                        annotationResolver = AnnotationsResolver.getClassAnnotationResolver(kmClass)
+                    )
                 }
 
                 else -> null
@@ -70,10 +103,7 @@ class CppAccessibleInterfaceAnnotationProcessor(
             }
         }
 
-        var customPath = annotation.customPath
-        if (customPath.isNotEmpty()) {
-            customPath = customPath.removeSuffix("/") + "/"
-        }
+        val customPath = getCustomPathPrefix(annotation.customPath)
 
         val cppClassName = annotation.cppClassName.takeIf { it.isNotEmpty() } ?: className
         val header = generateJObjectTemplateHeader(
@@ -105,18 +135,28 @@ class CppAccessibleInterfaceAnnotationProcessor(
             methods = methods
         )
 
+        if (jniCode.isNotEmpty()) {
+            val jniCppFile = File(cppOutputDirectory, "$customPath$cppClassName.jni.cpp")
+            jniCppFile.writeText(generateHeadersCode(methods) + jniCode)
+        }
+
+        writeCppFunctions(
+            packageName = packageName,
+            namespace = cppClassName + "Functions",
+            kotlinClassName = className,
+            customPathPrefix = customPath,
+            cppFunctions = cppFunctions
+        )
+    }
+
+    private fun generateHeadersCode(methods: List<MethodGenerator>): String {
         val headersList = methods.flatMap {
             it.getRequestedCppHeaders()
         }
 
-        val headers = headersList.distinct().joinToString("\n") {
+        return headersList.distinct().joinToString("\n") {
             "#include \"$it.h\""
         } + "\n"
-
-        if (jniCode.isNotEmpty()) {
-            val jniCppFile = File(cppOutputDirectory, "$customPath$cppClassName.jni.cpp")
-            jniCppFile.writeText(headers + jniCode)
-        }
     }
 
     override fun process(processingEnv: ProcessingEnvironment, roundEnv: RoundEnvironment?) {

@@ -54,3 +54,25 @@ fun <T> List<T>.removeFirstIfEquals(item: T): List<T> {
         this
     }
 }
+
+fun <T> List<T>.getOrNull(index: Int): T? {
+    return if (index < 0 || index >= size) {
+        null
+    } else {
+        get(index)
+    }
+}
+
+fun <T1, T2> List<T1>.contentEqualsUsingPredicate(other: List<T2>, predicate: (T1, T2) -> Boolean): Boolean {
+    if (other.size != size) {
+        return false
+    }
+
+    this.zip(other).forEach {
+        if (!predicate(it.first, it.second)) {
+            return false
+        }
+    }
+
+    return true
+}

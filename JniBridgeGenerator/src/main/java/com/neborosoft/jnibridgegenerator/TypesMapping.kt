@@ -79,6 +79,23 @@ private val JNI_SIGNATURE_MAPPING = mapOf(
     "DoubleArray" to "D]",
 )
 
+private val KOTLIN_TO_JAVA_TYPE_MAPPING = mapOf(
+    "kotlin.Byte" to "byte",
+    "kotlin.Short" to "short",
+    "kotlin.Int" to "int",
+    "kotlin.Long" to "long",
+    "kotlin.Float" to "float",
+    "kotlin.Double" to "double",
+    "kotlin.Boolean" to "boolean",
+    "kotlin.ByteArray" to "byte[]",
+    "kotlin.ShortArray" to "short[]",
+    "kotlin.IntArray" to "int[]",
+    "kotlin.LongArray" to "long[]",
+    "kotlin.FloatArray" to "float[]",
+    "kotlin.DoubleArray" to "double[]",
+    "kotlin.String" to "java.lang.String"
+)
+
 object TypesMapping {
     private val registeredCppTypesMapping = HashBiMap.create<String, String>()
 
@@ -110,5 +127,9 @@ object TypesMapping {
 
     fun getRegisteredCppTypeName(kotlinTypeName: String): String? {
         return registeredCppTypesMapping[kotlinTypeName]
+    }
+
+    fun getJavaTypeFromKotlinType(kotlinTypeName: String): String? {
+        return KOTLIN_TO_JAVA_TYPE_MAPPING[kotlinTypeName]
     }
 }

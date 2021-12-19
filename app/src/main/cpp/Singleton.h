@@ -18,7 +18,6 @@ public:
     static Singleton& instance();
 
     // Java method wrappers
-    void nativeInit();
     void yo();
     // Java method wrappers
 };

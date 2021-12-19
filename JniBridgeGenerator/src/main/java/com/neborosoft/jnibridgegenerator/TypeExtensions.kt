@@ -1,5 +1,6 @@
 package com.neborosoft.jnibridgegenerator
 
+import com.neborosoft.annotations.CppParam
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.ImmutableKmType
@@ -90,10 +91,8 @@ fun TypeName.getCppTypeName(convertFromCppToJni: Boolean): String {
 }
 
 @KotlinPoetMetadataPreview
-fun ImmutableKmType.getCppTypeName(convertFromCppToJni: Boolean): String {
-    return annotations.find {
-        it.className.endsWith("CppParam")
-    }?.arguments?.get("cppType")?.value?.toString() ?: getTypeName().getCppTypeName(convertFromCppToJni)
+fun ImmutableKmType.getCppTypeName(convertFromCppToJni: Boolean, cppParam: CppParam?): String {
+    return cppParam?.cppType ?: getTypeName().getCppTypeName(convertFromCppToJni)
 }
 
 fun TypeName?.getJniTypeName(): String {
@@ -117,6 +116,14 @@ fun TypeName.tryGetSimpleName(): String? {
 
             "$name<$args>"
         }
+        else -> null
+    }
+}
+
+fun TypeName.tryGetCanonicalName(): String? {
+    return when (this) {
+        is ClassName -> canonicalName
+        is ParameterizedTypeName -> rawType.canonicalName
         else -> null
     }
 }
@@ -152,8 +159,8 @@ fun LambdaTypeName.getJniSignature(): String {
 
 fun LambdaTypeName.getLambdaInterfaceTypeName(): String {
     val returnTypeString = returnType.getSimpleName()
-    val args = this.parameters.joinToString("") { it.type.getSimpleName() }
-    return "Lambda$returnTypeString$args"
+    val args = this.parameters.joinToString("_") { it.type.getSimpleName() }
+    return "Lambda_${returnTypeString}_$args"
 }
 
 fun String.getJniMethodCallMethodNameFromJniTypeName(): String {

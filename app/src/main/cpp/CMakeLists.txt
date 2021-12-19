@@ -35,6 +35,10 @@ add_library( # Sets the name of the library.
             KotlinClass.cpp
             KotlinClass.jni.cpp
             KotlinClassImpl.cpp
+            KotlinClassFunctions.jni.cpp
+            KotlinClassFunctions.cpp
+            CppFunctionsTestFunctions.cpp
+            CppFunctionsTestFunctions.jni.cpp
             FunctionCallsBridge.cpp
              jnibridgegenerator.cpp )
 

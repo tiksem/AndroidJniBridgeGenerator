@@ -10,22 +10,22 @@
 
 namespace FunctionCallsBridgeMethods {
     // Lambda method ides
-    extern jmethodID methodIdLambdaUnitInt;
+    extern jmethodID methodIdLambda_Unit_Int;
     
 // Lambda method ides
 }
 
 // Lambda call
-inline void CallLambdaFunctionLambdaUnitInt(JNIEnv* env, jobject obj, jint arg0) {
-    return env->CallVoidMethod(obj, FunctionCallsBridgeMethods::methodIdLambdaUnitInt, arg0);
+inline void CallLambdaFunctionLambda_Unit_Int(JNIEnv* env, jobject obj, jint arg0) {
+    return env->CallVoidMethod(obj, FunctionCallsBridgeMethods::methodIdLambda_Unit_Int, arg0);
 }
 
 // Lambda call
 
 inline void InitFunctionsCallBridge(JNIEnv* env) {
 // InitFunctionsCallBridge
-    jclass clazzLambdaUnitInt = env->FindClass("com/neborosoft/jnibridgegenerator/LambdaUnitInt");
-    FunctionCallsBridgeMethods::methodIdLambdaUnitInt = env->GetMethodID(clazzLambdaUnitInt, "invoke", "(I)V");
+    jclass clazzLambda_Unit_Int = env->FindClass("com/neborosoft/jnibridgegenerator/Lambda_Unit_Int");
+    FunctionCallsBridgeMethods::methodIdLambda_Unit_Int = env->GetMethodID(clazzLambda_Unit_Int, "invoke", "(I)V");
 
 // InitFunctionsCallBridge
 }

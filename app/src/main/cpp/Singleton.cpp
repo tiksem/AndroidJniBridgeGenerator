@@ -7,8 +7,6 @@
 #include <cassert>
 
 // Method ides declaration
-static jmethodID nativeInitId = nullptr;
-
 static jmethodID yoId = nullptr;
 // Method ides declaration
 
@@ -19,8 +17,6 @@ JNIEXPORT void JNICALL
 Java_com_neborosoft_jnibridgegenerator_Singleton_nativeInit(JNIEnv *env, jobject thiz) {
     jclass clazz = env->GetObjectClass(thiz);
     // Method ides generation
-    nativeInitId = env->GetMethodID(clazz, "nativeInit", "()V");
-    
     yoId = env->GetMethodID(clazz, "yo", "()V");
     // Method ides generation
     _instance = new Singleton(env, thiz);
@@ -35,12 +31,6 @@ Singleton& Singleton::instance() {
 }
 
 // Java method wrappers
-void Singleton::nativeInit() {
-    
-    (env->CallVoidMethod(obj, nativeInitId));
-}
-
-
 void Singleton::yo() {
     
     (env->CallVoidMethod(obj, yoId));

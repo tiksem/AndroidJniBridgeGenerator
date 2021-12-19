@@ -4,10 +4,7 @@ import com.neborosoft.annotations.CppClass
 import com.neborosoft.jnibridgegenerator.*
 import com.neborosoft.jnibridgegenerator.Constants.INCLUDE_START_TOKEN
 import com.neborosoft.jnibridgegenerator.Constants.JNI_PUBLIC_INTERFACE_TOKEN
-import com.neborosoft.jnibridgegenerator.methods.CppMethodGenerator
-import com.neborosoft.jnibridgegenerator.methods.NewInstanceCppMethodGenerator
-import com.neborosoft.jnibridgegenerator.methods.RegularCppMethodGenerator
-import com.neborosoft.jnibridgegenerator.methods.ReleaseCppMethodGenerator
+import com.neborosoft.jnibridgegenerator.methods.*
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
@@ -96,13 +93,18 @@ class CppClassAnnotationProcessor(
 
         val kotlinClassName = className + Constants.KOTLIN_CLASS_IMPLEMENTATION_POSTFIX
 
-        val methods = mutableListOf<CppMethodGenerator>(
+        val methods = mutableListOf(
             NewInstanceCppMethodGenerator(),
             ReleaseCppMethodGenerator()
         )
 
         kmClass.functions.mapTo(methods) {
-            RegularCppMethodGenerator(it, lambdaGenerator, generateCppPtr = true)
+            RegularCppMethodGenerator(
+                it,
+                lambdaGenerator,
+                generationPolicy = GenerationPolicy.WITH_CPP_PTR,
+                annotationResolver = AnnotationsResolver.getClassAnnotationResolver(kmClass)
+            )
         }
 
         val kotlinFile = File(kaptKotlinGeneratedDir)

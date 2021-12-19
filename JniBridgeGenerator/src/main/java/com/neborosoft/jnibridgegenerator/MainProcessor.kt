@@ -3,8 +3,10 @@ package com.neborosoft.jnibridgegenerator
 import com.google.auto.service.AutoService
 import com.neborosoft.annotations.CppAccessibleInterface
 import com.neborosoft.annotations.CppClass
+import com.neborosoft.annotations.CppFunctionsContainer
 import com.neborosoft.jnibridgegenerator.processors.CppAccessibleInterfaceAnnotationProcessor
 import com.neborosoft.jnibridgegenerator.processors.CppClassAnnotationProcessor
+import com.neborosoft.jnibridgegenerator.processors.CppFunctionsContainerProcessor
 import com.neborosoft.jnibridgegenerator.processors.CppTypeRegistrar
 import com.squareup.kotlinpoet.metadata.*
 import java.io.File
@@ -47,7 +49,16 @@ class MainProcessor : AbstractProcessor() {
                 CppClass::class.java, kaptKotlinGeneratedDir, cppOutputDirectory, lambdaGenerator
             ),
             CppAccessibleInterfaceAnnotationProcessor(
-                CppAccessibleInterface::class.java, kaptKotlinGeneratedDir, cppOutputDirectory
+                CppAccessibleInterface::class.java,
+                kaptKotlinGeneratedDir,
+                cppOutputDirectory,
+                lambdaGenerator
+            ),
+            CppFunctionsContainerProcessor(
+                CppFunctionsContainer::class.java,
+                kaptKotlinGeneratedDir,
+                cppOutputDirectory,
+                lambdaGenerator
             )
         )
 

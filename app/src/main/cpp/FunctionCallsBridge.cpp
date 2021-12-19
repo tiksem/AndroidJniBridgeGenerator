@@ -6,7 +6,7 @@
 
 namespace FunctionCallsBridgeMethods {
     // Lambda method ides
-    jmethodID methodIdLambdaUnitInt = nullptr;
+    jmethodID methodIdLambda_Unit_Int = nullptr;
     
 // Lambda method ides
 }
