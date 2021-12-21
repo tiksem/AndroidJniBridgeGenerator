@@ -85,9 +85,7 @@ fun TypeName.getCppTypeName(convertFromCppToJni: Boolean): String {
             "std::function<$returnType($args)>"
         }
         else -> null
-    } ?: throw UnsupportedOperationException(
-            "TypeName.getCppTypeName failed, unsupported typename $this"
-        )
+    } ?: "JObject"
 }
 
 @KotlinPoetMetadataPreview

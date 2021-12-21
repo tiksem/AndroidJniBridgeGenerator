@@ -5,8 +5,7 @@
 #include "JObject.h"
 #include "Converters.h"
 
-JObject::JObject(JNIEnv *env, jobject obj) : env(env) {
-    this->obj = env->NewGlobalRef(obj);
+JObject::JObject(JNIEnv *env, jobject obj) : env(env), obj(obj) {
 }
 
 JObject::~JObject() {
@@ -51,4 +50,8 @@ JObject& JObject::operator=(JObject&& o)  noexcept {
 
 jobject JObject::getJavaObject() const {
     return obj;
+}
+
+JNIEnv *JObject::getEnv() const {
+    return env;
 }

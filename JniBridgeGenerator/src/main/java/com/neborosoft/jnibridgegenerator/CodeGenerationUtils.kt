@@ -15,7 +15,7 @@ object CodeGenerationUtils {
         types: List<String>,
         names: List<String>
     ): String {
-        return (types zip names).joinToString(",") {
+        return (types zip names).joinToString(", ") {
             it.first + " " + it.second
         }
     }

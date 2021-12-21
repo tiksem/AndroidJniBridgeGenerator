@@ -21,6 +21,8 @@ public:
     ~JObject();
 
     jobject getJavaObject() const;
+
+    JNIEnv *getEnv() const;
 };
 
 

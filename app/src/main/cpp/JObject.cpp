@@ -52,3 +52,7 @@ JObject& JObject::operator=(JObject&& o)  noexcept {
 jobject JObject::getJavaObject() const {
     return obj;
 }
+
+JNIEnv *JObject::getEnv() const {
+    return env;
+}

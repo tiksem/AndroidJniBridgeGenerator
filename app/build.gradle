@@ -45,6 +45,7 @@ android {
     kapt {
         arguments {
             arg("cpp.outputDirectory", projectDir.absolutePath + "/src/main/cpp")
+            arg("kotlin.cpp.customTypeMapping", new File(projectDir.absoluteFile, "cppMapping.json").text)
         }
     }
 }

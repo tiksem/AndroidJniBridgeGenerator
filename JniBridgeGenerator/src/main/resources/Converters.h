@@ -8,9 +8,11 @@
 #include <jni.h>
 #include "JArray.h"
 #include "JString.h"
+#include "JObject.h"
 #include <string>
 #include <vector>
 #include <functional>
+#include "CustomConverters.h"
 
 template<typename CppType, typename JavaType>
 CppType ConvertToCppType(JNIEnv *env, JavaType javaType) {

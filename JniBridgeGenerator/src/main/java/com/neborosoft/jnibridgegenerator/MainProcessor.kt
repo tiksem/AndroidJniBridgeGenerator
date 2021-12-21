@@ -94,6 +94,17 @@ class MainProcessor : AbstractProcessor() {
                 FileOutputStream(File(dir, it))
             ) ?: throw IllegalStateException("$it resource not found")
         }
+
+        Constants.CPP_RESOURCES_COPY_ONLY_IF_NOT_EXIST.forEach {
+            val file = File(dir, it)
+            if (file.exists()) {
+                return@forEach
+            }
+
+            classLoader.getResourceAsStream(it)?.copyTo(
+                FileOutputStream(file)
+            ) ?: throw IllegalStateException("$it resource not found")
+        }
     }
 
     override fun getSupportedAnnotationTypes(): MutableSet<String> {

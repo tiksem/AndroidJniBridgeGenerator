@@ -27,6 +27,10 @@ object Constants {
         "JObject.cpp"
     )
 
+    val CPP_RESOURCES_COPY_ONLY_IF_NOT_EXIST = listOf(
+        "CustomConverters.h",
+    )
+
     val CPP_PRIMITIVES = setOf(
         "bool",
         "int8_t", "int16_t", "int32_t", "int64_t",
