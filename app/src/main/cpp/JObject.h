@@ -15,12 +15,12 @@ protected:
 public:
     JObject(JNIEnv *env, jobject obj);
     JObject(const JObject& obj);
-    JObject(JObject&&) noexcept;
     JObject& operator=(const JObject&);
-    JObject& operator=(JObject&&) noexcept;
     ~JObject();
 
     jobject getJavaObject() const;
+
+    JNIEnv *getEnv() const;
 };
 
 

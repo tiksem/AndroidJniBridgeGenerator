@@ -26,7 +26,7 @@ publishing {
         gpr(MavenPublication) {
             groupId = 'com.neborosoft'
             artifactId = 'android_jni_bridge_generator_annotations'
-            version = '1.0.7'
+            version = '1.0.9'
 
             from(components.java)
         }

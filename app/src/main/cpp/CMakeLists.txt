@@ -39,7 +39,6 @@ add_library( # Sets the name of the library.
             KotlinClassFunctions.cpp
             CppFunctionsTestFunctions.cpp
             CppFunctionsTestFunctions.jni.cpp
-            AndroidBitmap.cpp
             FunctionCallsBridge.cpp
              jnibridgegenerator.cpp )
 

@@ -87,6 +87,7 @@ private val KOTLIN_TO_JAVA_TYPE_MAPPING = mapOf(
     "kotlin.Float" to "float",
     "kotlin.Double" to "double",
     "kotlin.Boolean" to "boolean",
+    "kotlin.Char" to "char",
     "kotlin.ByteArray" to "byte[]",
     "kotlin.ShortArray" to "short[]",
     "kotlin.IntArray" to "int[]",

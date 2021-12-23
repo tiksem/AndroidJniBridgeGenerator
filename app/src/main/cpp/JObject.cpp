@@ -5,8 +5,7 @@
 #include "JObject.h"
 #include "Converters.h"
 
-JObject::JObject(JNIEnv *env, jobject obj) : env(env) {
-    this->obj = env->NewGlobalRef(obj);
+JObject::JObject(JNIEnv *env, jobject obj) : env(env), obj(obj) {
 }
 
 JObject::~JObject() {
@@ -28,24 +27,6 @@ JObject &JObject::operator=(const JObject & o) {
 
     env->DeleteGlobalRef(obj);
     obj = env->NewGlobalRef(o.obj);
-    return *this;
-}
-
-JObject::JObject(JObject&& o) noexcept {
-    this->obj = o.obj;
-    this->env = o.env;
-    o.obj = nullptr;
-}
-
-JObject& JObject::operator=(JObject&& o)  noexcept {
-    if (&o == this) {
-        return *this;
-    }
-
-    this->obj = o.obj;
-    this->env = o.env;
-    o.obj = nullptr;
-
     return *this;
 }
 
