@@ -30,24 +30,6 @@ JObject &JObject::operator=(const JObject & o) {
     return *this;
 }
 
-JObject::JObject(JObject&& o) noexcept {
-    this->obj = o.obj;
-    this->env = o.env;
-    o.obj = nullptr;
-}
-
-JObject& JObject::operator=(JObject&& o)  noexcept {
-    if (&o == this) {
-        return *this;
-    }
-
-    this->obj = o.obj;
-    this->env = o.env;
-    o.obj = nullptr;
-
-    return *this;
-}
-
 jobject JObject::getJavaObject() const {
     return obj;
 }
