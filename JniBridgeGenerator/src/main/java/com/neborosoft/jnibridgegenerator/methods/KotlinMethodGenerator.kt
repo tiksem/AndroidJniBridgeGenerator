@@ -1,5 +1,6 @@
 package com.neborosoft.jnibridgegenerator.methods
 
+import com.neborosoft.annotations.CppMethod
 import com.neborosoft.annotations.CppParam
 import com.neborosoft.jnibridgegenerator.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmFunction
@@ -19,10 +20,10 @@ class KotlinMethodGenerator(
         annotationResolver.getParameterAnnotationResolver(kmFunction)
 
     init {
-        val cppReturnParam = annotationResolver.getAnnotation(kmFunction, CppParam::class.java)
+        val cppReturnParam = annotationResolver.getAnnotation(kmFunction, CppMethod::class.java)
         cppReturnType = kmFunction.returnType.getCppTypeName(
             convertFromCppToJni = true,
-            cppParam = cppReturnParam
+            cppMethod = cppReturnParam
         )
         jniReturnType = kmFunction.returnType.getTypeName().getJniTypeName()
         cppTypes = kmFunction.valueParameters.mapIndexed { index, it ->
@@ -73,7 +74,7 @@ class KotlinMethodGenerator(
                 ).replace(
                     "    return ConvertToCppType<ReturnType>(env, res);\n",
                     ""
-                ).replace("static_cast<JniReturnType>", "")
+                ).replace("(JniReturnType)", "")
             } else if(TypesMapping.isCppTypeRegistered(cppReturnType)) {
                 it.replace(
                     "ConvertToCppType<ReturnType>(env, res)",

@@ -32,7 +32,7 @@ private val DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING_FROM_CPP_TO_JNI  = mapOf(
     "Float" to "float",
     "Double" to "double",
     "Boolean" to "bool",
-    "Char" to "jchar",
+    "Char" to "char16_t",
     "ByteArray" to "std::string",
     "BooleanArray" to "std::vector<bool>",
     "ShortArray" to "std::vector<int16_t>",

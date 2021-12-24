@@ -22,7 +22,7 @@ JObjectTemplate::JObjectTemplate(JNIEnv *env, jobject obj) : JObject(env, obj) {
 // Java method wrappers
 ReturnType JObjectTemplate::methodName(args) {
     converters
-    auto res = static_cast<JniReturnType>(env->CallObjectMethod(obj, methodNameIdconvertedArgs));
+    auto res = (JniReturnType)env->CallObjectMethod(obj, methodNameIdconvertedArgs);
     return ConvertToCppType<ReturnType>(env, res);
 }
 // Java method wrappers

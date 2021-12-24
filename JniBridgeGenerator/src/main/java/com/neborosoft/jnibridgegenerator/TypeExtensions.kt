@@ -1,5 +1,6 @@
 package com.neborosoft.jnibridgegenerator
 
+import com.neborosoft.annotations.CppMethod
 import com.neborosoft.annotations.CppParam
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -93,6 +94,11 @@ fun ImmutableKmType.getCppTypeName(convertFromCppToJni: Boolean, cppParam: CppPa
     return cppParam?.cppType ?: getTypeName().getCppTypeName(convertFromCppToJni)
 }
 
+@KotlinPoetMetadataPreview
+fun ImmutableKmType.getCppTypeName(convertFromCppToJni: Boolean, cppMethod: CppMethod?): String {
+    return cppMethod?.cppType ?: getTypeName().getCppTypeName(convertFromCppToJni)
+}
+
 fun TypeName?.getJniTypeName(): String {
     return when (this) {
         null -> "void"
@@ -167,6 +173,10 @@ fun String.getJniMethodCallMethodNameFromJniTypeName(): String {
     }
 
     if (this == "jstring") {
+        return "CallObjectMethod"
+    }
+
+    if (this[0] == 'j' && this.endsWith("Array")) {
         return "CallObjectMethod"
     }
 

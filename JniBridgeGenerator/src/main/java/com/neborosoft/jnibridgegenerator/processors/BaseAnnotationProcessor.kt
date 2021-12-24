@@ -17,7 +17,8 @@ import javax.lang.model.element.ExecutableElement
 abstract class BaseAnnotationProcessor(
     private val annotation: Class<out Annotation>,
     protected val kaptKotlinGeneratedDir: String,
-    protected val cppOutputDirectory: String
+    protected val cppOutputDirectory: String,
+    private val registerClassAnnotations: Boolean = true
 ) {
     protected fun readResource(resourceName: String): String {
         return Utils.readResource(resourceName)
@@ -34,12 +35,14 @@ abstract class BaseAnnotationProcessor(
             val typeMetadata = element.getAnnotation(Metadata::class.java) ?: return@forEach
             val kmClass = typeMetadata.toImmutableKmClass()
 
-            AnnotationsResolver.registerClass(
-                kmClass = kmClass,
-                functions = element.enclosedElements.mapNotNull {
-                    it as? ExecutableElement
-                }
-            )
+            if (registerClassAnnotations) {
+                AnnotationsResolver.registerClass(
+                    kmClass = kmClass,
+                    functions = element.enclosedElements.mapNotNull {
+                        it as? ExecutableElement
+                    }
+                )
+            }
 
             processClass(className, packageName, kmClass, element.getAnnotation(annotation))
         }

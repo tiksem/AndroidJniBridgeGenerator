@@ -9,11 +9,13 @@
 #include <string>
 #include <vector>
 #include "JObject.h"
+#include "Converters.h"
 
 class JObjectTemplate : public JObject {
 public:
     static void init(JNIEnv* env);
 
+    JObjectTemplate() = default;
     JObjectTemplate(JNIEnv *env, jobject obj);
 
     // Java method wrappers

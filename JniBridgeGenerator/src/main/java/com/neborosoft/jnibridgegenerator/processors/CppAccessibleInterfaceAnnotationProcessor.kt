@@ -109,7 +109,8 @@ class CppAccessibleInterfaceAnnotationProcessor(
         val header = generateJObjectTemplateHeader(
             cppClassName = cppClassName,
             methods = methods,
-            isSingleton = annotation.isSingleton
+            isSingleton = annotation.isSingleton,
+            base = annotation.base
         )
         File(cppOutputDirectory, "$customPath$cppClassName.h").writeText(header)
 
@@ -179,7 +180,8 @@ class CppAccessibleInterfaceAnnotationProcessor(
     private fun generateJObjectTemplateHeader(
         cppClassName: String,
         isSingleton: Boolean,
-        methods: List<MethodGenerator>
+        methods: List<MethodGenerator>,
+        base: Array<String>
     ): String {
         val cppTemplate = readResource(if (isSingleton) {
             Constants.J_OBJECT_SINGLETON_TEMPLATE_H
@@ -199,6 +201,15 @@ class CppAccessibleInterfaceAnnotationProcessor(
             res = res.replace("JObjectSingletonTemplate", cppClassName)
         } else {
             res = res.replace("JObjectTemplate", cppClassName)
+        }
+
+        if (base.isNotEmpty()) {
+            res = res.replace(
+                "public JObject",
+                "public JObject, " + base.joinToString(", ") {
+                    "public $it"
+                }
+            )
         }
 
         return res

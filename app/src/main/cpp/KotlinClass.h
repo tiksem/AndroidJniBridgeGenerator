@@ -9,17 +9,20 @@
 #include <string>
 #include <vector>
 #include "JObject.h"
+#include "Converters.h"
 
-class KotlinClass : public JObject {
+class KotlinClass : public JObject, public Eblo {
 public:
     static void init(JNIEnv* env);
 
+    KotlinClass() = default;
     KotlinClass(JNIEnv *env, jobject obj);
 
     // Java method wrappers
     std::vector<int64_t> bbbbbgggg();
     void d(int32_t e);
     std::string eeer(const std::vector<int64_t>& ee);
+    Eblo u(const Eblo& r);
     // Java method wrappers
 };
 

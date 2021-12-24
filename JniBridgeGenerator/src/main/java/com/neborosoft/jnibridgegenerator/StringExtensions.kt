@@ -49,3 +49,9 @@ fun String.replaceStringBetweenTokens(token1: String,
 
     return replace(startIndex = index1, endIndex = index2, token = replacement)
 }
+
+fun String.replaceStringBetweenTokens(token: String,
+                                      replacement: String,
+                                      replaceTokens: Boolean = false): String {
+    return replaceStringBetweenTokens(token, token, replacement, replaceTokens)
+}

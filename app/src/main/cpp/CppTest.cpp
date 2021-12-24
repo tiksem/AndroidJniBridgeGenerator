@@ -29,3 +29,7 @@ void CppTest::ffg(const std::function<void(int32_t)> &l) {
 void CppTest::rrr(KotlinClass i) {
 
 }
+
+Uee CppTest::prrttr() {
+    return Uee();
+}

@@ -19,6 +19,7 @@ public:
         void ffg(const std::function<void(int32_t)>& l);
         std::string g();
         int32_t getA();
+        Uee prrttr();
         void rrr(KotlinClass i);
         void yo(const JString& value);
     // Public Jni Interface

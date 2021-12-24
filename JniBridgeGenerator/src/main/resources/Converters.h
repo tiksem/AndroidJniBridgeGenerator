@@ -9,10 +9,10 @@
 #include "JArray.h"
 #include "JString.h"
 #include "JObject.h"
+#include "Converters.h"
 #include <string>
 #include <vector>
 #include <functional>
-#include "CustomConverters.h"
 
 template<typename CppType, typename JavaType>
 CppType ConvertToCppType(JNIEnv *env, JavaType javaType) {
@@ -57,6 +57,11 @@ inline JDoubleArray ConvertToCppType(JNIEnv *env, jdoubleArray javaType) {
 template<>
 inline JFloatArray ConvertToCppType(JNIEnv *env, jfloatArray javaType) {
     return JFloatArray(javaType, env);
+}
+
+template<>
+inline JObject ConvertToCppType(JNIEnv *env, jobject javaType) {
+    return JObject(env, javaType);
 }
 
 template<typename JavaType, typename CppType>
@@ -117,5 +122,7 @@ inline jdoubleArray ConvertFromCppType<jdoubleArray>(JNIEnv *env, const std::vec
     env->SetDoubleArrayRegion(array, 0, length, v.data());
     return array;
 }
+
+#include "CustomConverters.h"
 
 #endif //JNIBRIDGEGENERATOR_CONVERTERS_H

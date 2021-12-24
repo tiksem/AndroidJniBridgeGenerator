@@ -55,6 +55,15 @@ Java_com_neborosoft_jnibridgegenerator_CppTestNative_getA(JNIEnv *env, jobject t
 }
 
 extern "C"
+JNIEXPORT jint JNICALL
+Java_com_neborosoft_jnibridgegenerator_CppTestNative_prrttr(JNIEnv *env, jobject thiz, jlong ptr) {
+
+    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    auto _result = self->prrttr();
+    return ConvertFromCppType<jint>(env, _result);
+}
+
+extern "C"
 JNIEXPORT void JNICALL
 Java_com_neborosoft_jnibridgegenerator_CppTestNative_rrr(JNIEnv *env, jobject thiz, jlong ptr, jobject i) {
     KotlinClass _i(env, i);   

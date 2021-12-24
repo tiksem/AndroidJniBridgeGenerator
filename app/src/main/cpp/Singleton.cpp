@@ -33,6 +33,6 @@ Singleton& Singleton::instance() {
 // Java method wrappers
 void Singleton::yo() {
     
-    (env->CallVoidMethod(obj, yoId));
+    static_cast<void>(env->CallVoidMethod(obj, yoId));
 }
 // Java method wrappers

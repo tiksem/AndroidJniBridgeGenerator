@@ -37,7 +37,7 @@ class RegularCppMethodGenerator(
     private val cppReturnType by lazy {
         kmFunction.returnType.getCppTypeName(
             convertFromCppToJni = true,
-            cppParam = annotationResolver.getAnnotation(kmFunction, CppParam::class.java)
+            cppMethod = annotationResolver.getAnnotation(kmFunction, CppMethod::class.java)
         )
     }
 

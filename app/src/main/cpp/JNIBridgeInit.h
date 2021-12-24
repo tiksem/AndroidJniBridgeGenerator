@@ -9,9 +9,11 @@
 #include "Singleton.h"
 #include "KotlinClass.h"
 #include "FunctionCallsBridge.h"
+#include "KotlinConstructors.h"
 
 void JNIBridgeInit(JNIEnv* env) {
     InitFunctionsCallBridge(env);
+    InitKotlinConstructors(env);
 // Register JObjects
     KotlinClass::init(env);
 // Register JObjects

@@ -7,9 +7,11 @@
 
 #include <jni.h>
 #include "FunctionCallsBridge.h"
+#include "KotlinConstructors.h"
 
 void JNIBridgeInit(JNIEnv* env) {
     InitFunctionsCallBridge(env);
+    InitKotlinConstructors(env);
 // Register JObjects
 // Register JObjects
 }

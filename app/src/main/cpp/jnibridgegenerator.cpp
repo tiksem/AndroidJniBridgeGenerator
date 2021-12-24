@@ -1,6 +1,7 @@
 #include <jni.h>
 #include "Converters.h"
 #include "JNIBridgeInit.h"
+#include "../../../../JniBridgeGenerator/src/main/resources/KotlinConstructors.h"
 
 // Write C++ code here.
 //

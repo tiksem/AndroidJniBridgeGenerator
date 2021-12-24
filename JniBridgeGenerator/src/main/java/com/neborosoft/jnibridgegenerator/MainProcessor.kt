@@ -4,10 +4,8 @@ import com.google.auto.service.AutoService
 import com.neborosoft.annotations.CppAccessibleInterface
 import com.neborosoft.annotations.CppClass
 import com.neborosoft.annotations.CppFunctionsContainer
-import com.neborosoft.jnibridgegenerator.processors.CppAccessibleInterfaceAnnotationProcessor
-import com.neborosoft.jnibridgegenerator.processors.CppClassAnnotationProcessor
-import com.neborosoft.jnibridgegenerator.processors.CppFunctionsContainerProcessor
-import com.neborosoft.jnibridgegenerator.processors.CppTypeRegistrar
+import com.neborosoft.annotations.KotlinCppConstructor
+import com.neborosoft.jnibridgegenerator.processors.*
 import com.squareup.kotlinpoet.metadata.*
 import java.io.File
 import java.io.FileOutputStream
@@ -59,6 +57,11 @@ class MainProcessor : AbstractProcessor() {
                 kaptKotlinGeneratedDir,
                 cppOutputDirectory,
                 lambdaGenerator
+            ),
+            KotlinConstructorAnnotationProcessor(
+                KotlinCppConstructor::class.java,
+                kaptKotlinGeneratedDir,
+                cppOutputDirectory
             )
         )
 
