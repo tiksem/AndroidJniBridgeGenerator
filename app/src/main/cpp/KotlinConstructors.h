@@ -13,6 +13,7 @@ void InitKotlinConstructors(JNIEnv* env);
 
 // Constructors
 jobject CreateKotlinStruct(JNIEnv* env, int32_t a, const std::string& b);
+jobjectArray CreateKotlinStructArray(JNIEnv* env, jint length);
 // Constructors
 
 #endif //JNIBRIDGEGENERATOR_KOTLINCONSTRUCTORS_H

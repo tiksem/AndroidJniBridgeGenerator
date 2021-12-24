@@ -26,4 +26,8 @@ jobject CreateKotlinStruct(JNIEnv* env, int32_t a, const std::string& b) {
     auto _b = ConvertFromCppType<jstring>(env, b);
     return env->NewObject(classKotlinStruct, constructorKotlinStruct, _a, _b);
 }
+
+jobjectArray CreateKotlinStructArray(JNIEnv* env, jint length) {
+    return env->NewObjectArray(length, classKotlinStruct, nullptr);
+}
 // Constructors

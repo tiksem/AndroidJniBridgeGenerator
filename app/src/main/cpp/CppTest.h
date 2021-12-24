@@ -20,7 +20,9 @@ public:
         std::string g();
         int32_t getA();
         Uee prrttr();
+        void push(const std::vector<std::string>& e);
         void rrr(KotlinClass i);
+        void vvvv(const std::vector<KotlinClass>& e);
         void yo(const JString& value);
     // Public Jni Interface
 };

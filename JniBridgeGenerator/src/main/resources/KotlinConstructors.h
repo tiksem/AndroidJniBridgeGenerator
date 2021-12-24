@@ -13,6 +13,7 @@ void InitKotlinConstructors(JNIEnv* env);
 
 // Constructors
 jobject CreateKotlinObject(JNIEnv* env___Args);
+jobjectArray CreateKotlinObjectArray(JNIEnv* env, jint length);
 // Constructors
 
 #endif //JNIBRIDGEGENERATOR_KOTLINCONSTRUCTORS_H

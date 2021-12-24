@@ -85,6 +85,21 @@ fun TypeName.getCppTypeName(convertFromCppToJni: Boolean): String {
 
             "std::function<$returnType($args)>"
         }
+        is ParameterizedTypeName -> {
+            if (this.rawType.simpleName == "Array") {
+                val arrayType = this.typeArguments[0]
+                val simpleName = arrayType.getSimpleName()
+                if (simpleName == "String") {
+                    "std::vector<std::string>"
+                } else  {
+                    val registeredCppType = TypesMapping.getRegisteredCppTypeName(simpleName)
+                        ?: throw IllegalStateException("Array<T> is only supported for String and types marked as CppAccessibleInterface")
+                    "std::vector<$registeredCppType>"
+                }
+            } else {
+                null
+            }
+        }
         else -> null
     } ?: "JObject"
 }
@@ -104,7 +119,13 @@ fun TypeName?.getJniTypeName(): String {
         null -> "void"
         is ClassName -> TypesMapping.getJniType(kotlinTypeName = simpleName)
         is LambdaTypeName -> "jobject"
-        is ParameterizedTypeName -> "jobject"
+        is ParameterizedTypeName -> {
+            if (this.rawType.simpleName == "Array") {
+                "jobjectArray"
+            } else {
+                "jobject"
+            }
+        }
         else -> throw UnsupportedOperationException("Unsupported $this")
     }
 }
@@ -122,6 +143,10 @@ fun TypeName.tryGetSimpleName(): String? {
         }
         else -> null
     }
+}
+
+fun TypeName.getCanonicalName(): String {
+    return tryGetCanonicalName() ?: throw IllegalStateException("Unable to get canonical name")
 }
 
 fun TypeName.tryGetCanonicalName(): String? {

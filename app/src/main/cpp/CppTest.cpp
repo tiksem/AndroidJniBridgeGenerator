@@ -33,3 +33,11 @@ void CppTest::rrr(KotlinClass i) {
 Uee CppTest::prrttr() {
     return Uee();
 }
+
+void CppTest::push(const std::vector<std::string> &e) {
+
+}
+
+void CppTest::vvvv(const std::vector<KotlinClass> &e) {
+
+}

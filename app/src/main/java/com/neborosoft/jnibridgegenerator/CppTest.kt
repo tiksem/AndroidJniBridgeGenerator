@@ -13,4 +13,6 @@ interface CppTest {
     fun rrr(i: KotlinInterfaceTest)
     @CppMethod(cppType = "Uee")
     fun prrttr(): Int
+    fun push(e: Array<String>)
+    fun vvvv(e: Array<KotlinInterfaceTest>)
 }

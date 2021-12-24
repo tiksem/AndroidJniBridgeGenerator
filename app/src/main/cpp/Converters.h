@@ -123,6 +123,32 @@ inline jdoubleArray ConvertFromCppType<jdoubleArray>(JNIEnv *env, const std::vec
     return array;
 }
 
+template<typename CppType>
+std::vector<CppType> ConvertToCppArray(JNIEnv *env, jobjectArray array) {
+    std::vector<CppType> res;
+    jsize length = env->GetArrayLength(array);
+    res.reserve(length);
+    for (int i = 0; i < length; ++i) {
+        CppType cppType(env, env->GetObjectArrayElement(array, i));
+        res.push_back(cppType);
+    }
+
+    return res;
+}
+
+template<>
+inline std::vector<std::string> ConvertToCppArray(JNIEnv *env, jobjectArray array) {
+    std::vector<std::string> res;
+    jsize length = env->GetArrayLength(array);
+    res.reserve(length);
+    for (int i = 0; i < length; ++i) {
+        JString str((jstring)env->GetObjectArrayElement(array, i), env);
+        res.push_back(str.getData());
+    }
+
+    return res;
+}
+
 #include "CustomConverters.h"
 
 #endif //JNIBRIDGEGENERATOR_CONVERTERS_H

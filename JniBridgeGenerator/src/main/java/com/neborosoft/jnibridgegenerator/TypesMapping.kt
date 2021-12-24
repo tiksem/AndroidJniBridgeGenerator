@@ -40,7 +40,7 @@ private val DEFAULT_KOTLIN_TO_CPP_TYPES_MAPPING_FROM_CPP_TO_JNI  = mapOf(
     "LongArray" to "std::vector<int64_t>",
     "FloatArray" to "std::vector<float>",
     "DoubleArray" to "std::vector<double>",
-    "String" to "std::string"
+    "String" to "std::string",
 )
 
 private val KOTLIN_TO_JNI_TYPES_MAPPING = mapOf(
@@ -59,7 +59,8 @@ private val KOTLIN_TO_JNI_TYPES_MAPPING = mapOf(
     "LongArray" to "jlongArray",
     "FloatArray" to "jfloatArray",
     "DoubleArray" to "jdoubleArray",
-    "String" to "jstring"
+    "String" to "jstring",
+    "Array" to "jobjectArray"
 )
 
 private val JNI_SIGNATURE_MAPPING = mapOf(

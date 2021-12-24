@@ -25,4 +25,8 @@ jobject CreateKotlinObject(JNIEnv* env___Args) {
 // converters
     return env->NewObject(classKotlinObject, constructorKotlinObject___args);
 }
+
+jobjectArray CreateKotlinObjectArray(JNIEnv* env, jint length) {
+    return env->NewObjectArray(length, classKotlinObject, nullptr);
+}
 // Constructors

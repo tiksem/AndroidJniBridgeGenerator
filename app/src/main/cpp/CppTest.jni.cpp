@@ -65,10 +65,26 @@ Java_com_neborosoft_jnibridgegenerator_CppTestNative_prrttr(JNIEnv *env, jobject
 
 extern "C"
 JNIEXPORT void JNICALL
+Java_com_neborosoft_jnibridgegenerator_CppTestNative_push(JNIEnv *env, jobject thiz, jlong ptr, jobjectArray e) {
+    std::vector<std::string> _e = ConvertToCppArray<std::string>(env, e);   
+    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    self->push(_e);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
 Java_com_neborosoft_jnibridgegenerator_CppTestNative_rrr(JNIEnv *env, jobject thiz, jlong ptr, jobject i) {
     KotlinClass _i(env, i);   
     auto* self = reinterpret_cast<CppTest*&>(ptr);
     self->rrr(_i);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_neborosoft_jnibridgegenerator_CppTestNative_vvvv(JNIEnv *env, jobject thiz, jlong ptr, jobjectArray e) {
+    std::vector<KotlinClass> _e = ConvertToCppArray<KotlinClass>(env, e);   
+    auto* self = reinterpret_cast<CppTest*&>(ptr);
+    self->vvvv(_e);
 }
 
 extern "C"

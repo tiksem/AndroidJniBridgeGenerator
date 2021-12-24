@@ -1,6 +1,7 @@
 package com.neborosoft.jnibridgegenerator
 
 import com.squareup.kotlinpoet.LambdaTypeName
+import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
 import com.squareup.kotlinpoet.metadata.ImmutableKmFunction
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
@@ -67,6 +68,21 @@ object AnnotationsResolver {
                         }
                         aType == bType -> {
                             true
+                        }
+                        bTypeName is ParameterizedTypeName -> {
+                            if (bTypeName.rawType.simpleName == "Array") {
+                                val canonicalName = bTypeName.typeArguments[0].getCanonicalName()
+                                if (canonicalName == "kotlin.String") {
+                                    aType == "java.lang.String[]"
+                                } else {
+                                    aType == "$canonicalName[]"
+                                }
+                            } else {
+                                throw UnsupportedOperationException(
+                                    "${f.name} is not supported. Only Array is supported " +
+                                            "as parameterized param for now."
+                                )
+                            }
                         }
                         aType == TypesMapping.getJavaTypeFromKotlinType(bType) -> {
                             true

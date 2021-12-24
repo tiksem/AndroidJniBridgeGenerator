@@ -15,7 +15,7 @@ buildscript {
 }
 
 ext {
-    libVersion = "1.1.8"
+    libVersion = "1.2.1"
 }
 
 task clean(type: Delete) {

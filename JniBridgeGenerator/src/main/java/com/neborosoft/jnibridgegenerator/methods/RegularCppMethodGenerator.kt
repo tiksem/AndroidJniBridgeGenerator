@@ -126,12 +126,39 @@ class RegularCppMethodGenerator(
         val args: String
     )
 
+    private fun getCppTypeInVector(cppType: String): String? {
+        return if(cppType.startsWith("std::vector<")) {
+            return cppType.findStringBetweenQuotes("<", ">")
+        } else {
+            null
+        }
+    }
+
     private fun addRequestedCppHeaders(cppTypes: List<String>) {
-        requestedIncludeHeaders.addAll(cppTypes.map {
-            it.removeConstReferenceFromCppType()
-        }.filter {
-            TypesMapping.isCppTypeRegistered(cppTypeName = it)
+        requestedIncludeHeaders.addAll(cppTypes.mapNotNull {
+            val t = it.removeConstReferenceFromCppType()
+            if (TypesMapping.isCppTypeRegistered(cppTypeName = it)) {
+                t
+            } else {
+                getCppTypeInVector(t)?.takeIf { TypesMapping.isCppTypeRegistered(it) }
+            }
         })
+    }
+
+    private fun getConvertCall(noRefCppTypeName: String, paramName: String): String {
+        return if (TypesMapping.isCppTypeRegistered(noRefCppTypeName)) {
+            "(env, $paramName)"
+        } else {
+            val typeInVector = getCppTypeInVector(noRefCppTypeName)
+            if (typeInVector?.takeIf {
+                    TypesMapping.isCppTypeRegistered(it) || it == "std::string"
+                } != null) {
+                " = ConvertToCppArray<$typeInVector>(env, $paramName)"
+
+            } else {
+                " = ConvertToCppType<$noRefCppTypeName>(env, $paramName)"
+            }
+        }
     }
 
     private fun generateToCppParamConverters(
@@ -150,11 +177,7 @@ class RegularCppMethodGenerator(
 
             val lambda = lambdas[index]
             if (lambda == null) {
-                val convertCall = if (TypesMapping.isCppTypeRegistered(noRefCppTypeName)) {
-                    "(env, $paramName)"
-                } else {
-                    " = ConvertToCppType<$noRefCppTypeName>(env, $paramName)"
-                }
+                val convertCall = getConvertCall(noRefCppTypeName, paramName)
 
                 """
                 |    $noRefCppTypeName $convertedParamName$convertCall;   
@@ -191,11 +214,7 @@ class RegularCppMethodGenerator(
                 val callFunctionName = "CallLambdaFunction${lambda.getLambdaInterfaceTypeName()}"
                 val callFunctionObjParam = "$lambdaObjParamName.getJavaObject()"
 
-                val convertCall = if (TypesMapping.isCppTypeRegistered(cppReturnType)) {
-                    "ConvertToCppType<$cppReturnType>(env, callResult)"
-                } else {
-                    "$cppReturnType(env, callResult)"
-                }
+                val convertCall = getConvertCall(cppReturnType, "callResult")
 
                 val body = if (cppReturnType != "void") {
                     """
