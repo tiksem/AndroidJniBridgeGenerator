@@ -12,7 +12,7 @@
 
 // headers
 
-class CppTestConstructor : public Base {
+class CppTestConstructor {
 public:
     // Public Jni Interface
         std::vector<bool> a();

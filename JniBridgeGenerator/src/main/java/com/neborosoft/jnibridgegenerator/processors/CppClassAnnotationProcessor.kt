@@ -58,7 +58,8 @@ class CppClassAnnotationProcessor(
         existedClassCode: String?,
         methods: List<CppMethodGenerator>,
         includes: String,
-        cppClassName: String
+        cppClassName: String,
+        base: String
     ): String {
         val methodsDeclarations = methods.mapNotNull {
             it.getCppHeaderMethodDeclaration()
@@ -71,7 +72,7 @@ class CppClassAnnotationProcessor(
 
         val replacement = existedClassCode ?: cppTemplate
 
-        return replacement.replaceStringBetweenTokens(
+        var res = replacement.replaceStringBetweenTokens(
             token1 = JNI_PUBLIC_INTERFACE_TOKEN,
             token2 = JNI_PUBLIC_INTERFACE_TOKEN,
             replacement = code
@@ -80,6 +81,15 @@ class CppClassAnnotationProcessor(
             token2 = INCLUDE_START_TOKEN,
             replacement = includes
         ).replace(Constants.CPP_TEMPLATE_CLASS_NAME, cppClassName)
+
+        res = if (base.isEmpty()) {
+            res.replaceStringBetweenTokens(" : public ", "{", "")
+                .replace(": public", "")
+        } else {
+            res.replaceStringBetweenTokens("class $cppClassName", "{", " : public $base ")
+        }
+
+        return res
     }
 
     override fun processClass(
@@ -156,7 +166,8 @@ class CppClassAnnotationProcessor(
             methods = methods,
             cppClassName = className,
             includes = headers,
-            existedClassCode = cppFile.tryReadText()
+            existedClassCode = cppFile.tryReadText(),
+            base = annotation.base
         )
         cppFile.writeText(cppClass)
 
