@@ -42,8 +42,10 @@ class ReleaseCppMethodGenerator : CppMethodGenerator {
                 .addStatement("release()")
                 .build(),
             FunSpec.builder(METHOD_NAME)
+                .beginControlFlow("if (${Constants.PTR} != 0L)")
                 .addStatement("release(${Constants.PTR})")
                 .addStatement("${Constants.PTR} = 0")
+                .endControlFlow()
                 .build()
         )
     }

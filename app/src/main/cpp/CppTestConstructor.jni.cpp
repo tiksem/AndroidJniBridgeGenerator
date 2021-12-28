@@ -5,6 +5,12 @@
 #include "FunctionCallsBridge.h"
         
 extern "C"
+JNIEXPORT void JNICALL
+Java_com_neborosoft_jnibridgegenerator_CppTestConstructorNative_release(JNIEnv *env, jobject thiz, jlong ptr) {
+    delete reinterpret_cast<CppTestConstructor*&>(ptr);
+}
+
+extern "C"
 JNIEXPORT jobject JNICALL
 Java_com_neborosoft_jnibridgegenerator_CppTestConstructorNative_a(JNIEnv *env, jobject thiz, jlong ptr) {
 

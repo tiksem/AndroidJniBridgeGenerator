@@ -31,7 +31,8 @@ class CppClassAnnotationProcessor(
         val type = TypeSpec.classBuilder(kotlinClassName).apply {
             if (generateNativeConstructor) {
                 primaryConstructor(
-                    PropertySpec.builder(name = "ptr", type = LONG, KModifier.PRIVATE).build()
+                    PropertySpec.builder(name = "ptr", type = LONG, KModifier.PRIVATE)
+                        .mutable().build()
                 )
             } else {
                 addProperty(
@@ -106,8 +107,14 @@ class CppClassAnnotationProcessor(
 
         val kotlinClassName = className + Constants.KOTLIN_CLASS_IMPLEMENTATION_POSTFIX
 
-        val methods = if (annotation.withNativeConstructor) {
-            mutableListOf()
+        val methods: MutableList<CppMethodGenerator> = if (annotation.withNativeConstructor) {
+            if (annotation.releaseOnFinalize) {
+                mutableListOf(
+                    ReleaseCppMethodGenerator()
+                )
+            } else {
+                mutableListOf()
+            }
         } else {
             mutableListOf(
                 NewInstanceCppMethodGenerator(),

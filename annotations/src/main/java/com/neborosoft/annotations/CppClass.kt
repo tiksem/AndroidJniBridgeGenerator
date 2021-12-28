@@ -5,5 +5,7 @@ package com.neborosoft.annotations
 annotation class CppClass(
     val base: String = "",
     val customPath: String = "",
-    val withNativeConstructor: Boolean = false
+    val withNativeConstructor: Boolean = false,
+    // This parameter is ignored if withNativeConstructor == false
+    val releaseOnFinalize: Boolean = true
 )
