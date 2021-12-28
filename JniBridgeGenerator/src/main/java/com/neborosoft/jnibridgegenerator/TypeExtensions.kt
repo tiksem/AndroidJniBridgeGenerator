@@ -64,11 +64,19 @@ fun String.addConstReferenceToCppTypeNameIfRequired(): String {
 }
 
 fun String.isPrimitiveCppType(): Boolean {
-    return Constants.CPP_PRIMITIVES.contains(this)
+    return Constants.CPP_PRIMITIVES.contains(this) || endsWith('*')
 }
 
 fun String.removeConstReferenceFromCppType(): String {
     return this.replace("const ", "").replace("&", "")
+}
+
+fun TypeName.getCppTypeName(convertFromCppToJni: Boolean, cppParam: CppParam?): String {
+    return cppParam?.cppType ?: getCppTypeName(convertFromCppToJni)
+}
+
+fun TypeName.getCppTypeName(convertFromCppToJni: Boolean, cppMethod: CppMethod?): String {
+    return cppMethod?.cppType ?: getCppTypeName(convertFromCppToJni)
 }
 
 fun TypeName.getCppTypeName(convertFromCppToJni: Boolean): String {
@@ -106,12 +114,12 @@ fun TypeName.getCppTypeName(convertFromCppToJni: Boolean): String {
 
 @KotlinPoetMetadataPreview
 fun ImmutableKmType.getCppTypeName(convertFromCppToJni: Boolean, cppParam: CppParam?): String {
-    return cppParam?.cppType ?: getTypeName().getCppTypeName(convertFromCppToJni)
+    return getTypeName().getCppTypeName(convertFromCppToJni, cppParam)
 }
 
 @KotlinPoetMetadataPreview
 fun ImmutableKmType.getCppTypeName(convertFromCppToJni: Boolean, cppMethod: CppMethod?): String {
-    return cppMethod?.cppType ?: getTypeName().getCppTypeName(convertFromCppToJni)
+    return getTypeName().getCppTypeName(convertFromCppToJni, cppMethod)
 }
 
 fun TypeName?.getJniTypeName(): String {

@@ -66,7 +66,7 @@ inline JObject ConvertToCppType(JNIEnv *env, jobject javaType) {
 
 template<typename JavaType, typename CppType>
 JavaType ConvertFromCppType(JNIEnv *env, const CppType& cppType) {
-    return cppType;
+    return (JavaType)cppType;
 }
 
 template<>

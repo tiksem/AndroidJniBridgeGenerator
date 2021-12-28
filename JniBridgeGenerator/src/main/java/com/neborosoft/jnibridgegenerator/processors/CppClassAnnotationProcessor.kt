@@ -9,6 +9,7 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import java.io.File
+import java.util.*
 
 @KotlinPoetMetadataPreview
 class CppClassAnnotationProcessor(
@@ -25,20 +26,29 @@ class CppClassAnnotationProcessor(
         methods: List<CppMethodGenerator>,
         packageName: String,
         kotlinClassName: String,
+        generateNativeConstructor: Boolean
     ): FileSpec {
-        val type = TypeSpec.classBuilder(kotlinClassName)
-            .addProperty(
-                PropertySpec.builder(Constants.PTR, LONG, KModifier.PRIVATE)
-                    .mutable()
-                    .build()
-            )
-            .addFunctions(funSpecs = methods.flatMap {
+        val type = TypeSpec.classBuilder(kotlinClassName).apply {
+            if (generateNativeConstructor) {
+                primaryConstructor(
+                    PropertySpec.builder(name = "ptr", type = LONG, KModifier.PRIVATE).build()
+                )
+            } else {
+                addProperty(
+                    PropertySpec.builder(Constants.PTR, LONG, KModifier.PRIVATE)
+                        .mutable()
+                        .build()
+                )
+
+                addInitializerBlock(
+                    CodeBlock.of("ptr = newInstance()\n")
+                )
+            }
+
+            addFunctions(funSpecs = methods.flatMap {
                 it.getKotlinSpecs()
             })
-            .addInitializerBlock(
-                CodeBlock.of("ptr = newInstance()\n")
-            )
-            .build()
+        }.build()
 
         return FileSpec.builder(packageName, kotlinClassName)
             .addType(type).build()
@@ -86,10 +96,14 @@ class CppClassAnnotationProcessor(
 
         val kotlinClassName = className + Constants.KOTLIN_CLASS_IMPLEMENTATION_POSTFIX
 
-        val methods = mutableListOf(
-            NewInstanceCppMethodGenerator(),
-            ReleaseCppMethodGenerator()
-        )
+        val methods = if (annotation.withNativeConstructor) {
+            mutableListOf()
+        } else {
+            mutableListOf(
+                NewInstanceCppMethodGenerator(),
+                ReleaseCppMethodGenerator()
+            )
+        }
 
         kmClass.functions.mapTo(methods) {
             RegularCppMethodGenerator(
@@ -105,7 +119,8 @@ class CppClassAnnotationProcessor(
         val kotlinClass = generateKotlinClass(
             methods,
             packageName,
-            kotlinClassName
+            kotlinClassName,
+            generateNativeConstructor = annotation.withNativeConstructor
         )
         kotlinClass.writeTo(kotlinFile)
 
@@ -144,5 +159,17 @@ class CppClassAnnotationProcessor(
             existedClassCode = cppFile.tryReadText()
         )
         cppFile.writeText(cppClass)
+
+        if (annotation.withNativeConstructor) {
+            KotlinCppConstructorGenerator.addConstructor(
+                className = kotlinClassName,
+                cppClassName = className,
+                packageName = packageName,
+                params = listOf(ConstructorParam(
+                    name = "ptr",
+                    type = LONG
+                ))
+            )
+        }
     }
 }

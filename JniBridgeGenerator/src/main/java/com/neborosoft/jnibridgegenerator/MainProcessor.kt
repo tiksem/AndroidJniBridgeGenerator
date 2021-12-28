@@ -71,6 +71,8 @@ class MainProcessor : AbstractProcessor() {
 
         generateCppLambdaBridge(lambdaGenerator)
 
+        KotlinCppConstructorGenerator.generateConstructors(cppOutputDirectory)
+
         return true
     }
 

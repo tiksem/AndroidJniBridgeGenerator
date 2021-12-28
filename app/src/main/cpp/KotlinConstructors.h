@@ -8,10 +8,16 @@
 #include <jni.h>
 #include <string>
 #include <vector>
+// headers
+#include "CppTestConstructor.h"
+// headers
 
 void InitKotlinConstructors(JNIEnv* env);
 
 // Constructors
+jobject CreateCppTestConstructor(JNIEnv* env, CppTestConstructor* ptr);
+jobjectArray CreateCppTestConstructorArray(JNIEnv* env, jint length);
+
 jobject CreateKotlinStruct(JNIEnv* env, int32_t a, const std::string& b);
 jobjectArray CreateKotlinStructArray(JNIEnv* env, jint length);
 // Constructors
