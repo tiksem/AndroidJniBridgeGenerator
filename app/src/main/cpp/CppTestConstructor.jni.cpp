@@ -6,8 +6,14 @@
         
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_neborosoft_jnibridgegenerator_CppTestConstructorNative_release(JNIEnv *env, jobject thiz, jlong ptr) {
-    delete reinterpret_cast<CppTestConstructor*&>(ptr);
+Java_com_neborosoft_jnibridgegenerator_CppTestConstructorNative_release(JNIEnv *env, jobject thiz, jlong ptr, jlong deleter) {
+    if (deleter == 0) { 
+        delete reinterpret_cast<CppTestConstructor*&>(ptr);
+    } else {
+        auto* d = reinterpret_cast<std::function<void(CppTestConstructor*)>*&>(deleter);
+        (*d)(reinterpret_cast<CppTestConstructor*&>(ptr));
+        delete d;
+    }
 }
 
 extern "C"

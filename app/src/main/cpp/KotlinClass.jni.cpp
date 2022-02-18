@@ -1,4 +1,4 @@
-
+#include "CppTestConstructor.h"
 #include <jni.h>
 #include "Converters.h"
 #include "KotlinClass.h"

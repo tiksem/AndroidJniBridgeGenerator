@@ -13,11 +13,12 @@ class KotlinMethodGenerator(
 ): MethodGenerator {
     private val cppReturnType: String
     private val jniReturnType: String
-    private val cppTypes: List<String>
+    private val cppTypes: List<List<String>>
+    private val cppNames = ArrayList<List<String>>()
     private val jniTypes: List<String>
-    private val names: List<String>
     private val parameterAnnotationResolver =
         annotationResolver.getParameterAnnotationResolver(kmFunction)
+    private val requestedIncludeHeaders = ArrayList<String>()
 
     init {
         val cppReturnParam = annotationResolver.getAnnotation(kmFunction, CppMethod::class.java)
@@ -28,11 +29,15 @@ class KotlinMethodGenerator(
         jniReturnType = kmFunction.returnType.getTypeName().getJniTypeName()
         cppTypes = kmFunction.valueParameters.mapIndexed { index, it ->
             val cppParam = parameterAnnotationResolver.getAnnotation(index, CppParam::class.java)
-            it.type!!.getCppTypeName(convertFromCppToJni = true, cppParam)
-                .addConstReferenceToCppTypeNameIfRequired()
-        }
-        names = kmFunction.valueParameters.map {
-            it.name
+            val cppTypeName = it.type!!.getCppTypeName(convertFromCppToJni = true, cppParam)
+            if (TypesMapping.isCppTypeWithJavaConstructor(cppTypeName)) {
+                requestedIncludeHeaders.add(cppTypeName)
+                cppNames.add(listOf(it.name, "${it.name}Deleter"))
+                listOf("$cppTypeName*", "const std::function<void($cppTypeName*)>&")
+            } else {
+                cppNames.add(listOf(it.name))
+                listOf(cppTypeName.addConstReferenceToCppTypeNameIfRequired())
+            }
         }
         jniTypes = kmFunction.valueParameters.map {
             it.type!!.getTypeName().getJniTypeName()
@@ -43,8 +48,8 @@ class KotlinMethodGenerator(
         return CodeGenerationUtils.getCppHeaderMethodDeclaration(
             methodName = kmFunction.name,
             returnType = cppReturnType,
-            types = cppTypes,
-            names = names
+            types = cppTypes.flatten(),
+            names = cppNames.flatten()
         )
     }
 
@@ -52,13 +57,20 @@ class KotlinMethodGenerator(
         val jniCallArgsList = ArrayList<String>()
 
         val converters = jniTypes.mapIndexed { index, type ->
-            val name = names[index]
+            val cppNames = cppNames[index]
+            val name = cppNames.first()
             val convertedName = "_$name"
             jniCallArgsList.add(convertedName)
-
-            """
-            |$type $convertedName = ConvertFromCppType<$type>(env, $name);   
-            """.trimMargin()
+            if (cppNames.size == 1) {
+                """
+                |$type $convertedName = ConvertFromCppType<$type>(env, $name);   
+                """.trimMargin()
+            } else {
+                val cppType = cppTypes[index][0]
+                """
+                |$type $convertedName = Create${cppType.removePointerFromCppType()}(env, $name, ${cppNames[1]});   
+                """.trimMargin()
+            }
         }.joinToString("\n")
 
         var convertedArgs = jniCallArgsList.joinToString(", ")
@@ -85,7 +97,9 @@ class KotlinMethodGenerator(
             }
         }.replace("JniReturnType", jniReturnType)
             .replace("ReturnType", cppReturnType)
-            .replace("args", CodeGenerationUtils.generateCppMethodArgs(cppTypes, names))
+            .replace("args", CodeGenerationUtils.generateCppMethodArgs(
+                cppTypes.flatten(), cppNames.flatten()
+            ))
             .replace("CallObjectMethod", jniReturnType.getJniMethodCallMethodNameFromJniTypeName())
             .replace("methodName", kmFunction.name)
             .replace("convertedArgs", convertedArgs)
@@ -105,5 +119,9 @@ class KotlinMethodGenerator(
     fun getJvmSignature(): String {
         val str = kmFunction.signature!!.toString()
         return str.substring(startIndex = str.indexOf('('))
+    }
+
+    override fun getRequestedCppHeaders(): List<String> {
+        return requestedIncludeHeaders
     }
 }

@@ -212,6 +212,12 @@ class CppAccessibleInterfaceAnnotationProcessor(
             )
         }
 
+        res = res.replaceStringBetweenTokens("// headers\n", methods.flatMap {
+            it.getRequestedCppHeaders()
+        }.distinct().joinToString("") {
+            "#include \"$it.h\"\n"
+        })
+
         return res
     }
 

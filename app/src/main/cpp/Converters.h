@@ -20,49 +20,31 @@ CppType ConvertToCppType(JNIEnv *env, JavaType javaType) {
 }
 
 template<>
-inline JString ConvertToCppType<JString>(JNIEnv *env, jstring javaType) {
-    return JString(javaType, env);
-}
+JString ConvertToCppType<JString>(JNIEnv *env, jstring javaType);
 
 template<>
-inline std::string ConvertToCppType<std::string>(JNIEnv *env, jstring javaType) {
-    return JString(javaType, env).getData();
-}
+std::string ConvertToCppType<std::string>(JNIEnv *env, jstring javaType);
 
 template<>
-inline JByteArray ConvertToCppType(JNIEnv *env, jbyteArray javaType) {
-    return JByteArray(javaType, env);
-}
+JByteArray ConvertToCppType(JNIEnv *env, jbyteArray javaType);
 
 template<>
-inline JShortArray ConvertToCppType(JNIEnv *env, jshortArray javaType) {
-    return JShortArray(javaType, env);
-}
+JShortArray ConvertToCppType(JNIEnv *env, jshortArray javaType);
 
 template<>
-inline JIntArray ConvertToCppType(JNIEnv *env, jintArray javaType) {
-    return JIntArray(javaType, env);
-}
+JIntArray ConvertToCppType(JNIEnv *env, jintArray javaType);
 
 template<>
-inline JLongArray ConvertToCppType(JNIEnv *env, jlongArray javaType) {
-    return JLongArray(javaType, env);
-}
+JLongArray ConvertToCppType(JNIEnv *env, jlongArray javaType);
 
 template<>
-inline JDoubleArray ConvertToCppType(JNIEnv *env, jdoubleArray javaType) {
-    return JDoubleArray(javaType, env);
-}
+JDoubleArray ConvertToCppType(JNIEnv *env, jdoubleArray javaType);
 
 template<>
-inline JFloatArray ConvertToCppType(JNIEnv *env, jfloatArray javaType) {
-    return JFloatArray(javaType, env);
-}
+JFloatArray ConvertToCppType(JNIEnv *env, jfloatArray javaType);
 
 template<>
-inline JObject ConvertToCppType(JNIEnv *env, jobject javaType) {
-    return JObject(env, javaType);
-}
+JObject ConvertToCppType(JNIEnv *env, jobject javaType);
 
 template<typename JavaType, typename CppType>
 JavaType ConvertFromCppType(JNIEnv *env, const CppType& cppType) {
@@ -70,58 +52,28 @@ JavaType ConvertFromCppType(JNIEnv *env, const CppType& cppType) {
 }
 
 template<>
-inline jstring ConvertFromCppType<jstring>(JNIEnv *env, const std::string& str) {
-    return env->NewStringUTF(str.data());
-}
+jobject ConvertFromCppType(JNIEnv *env, const JObject& cppType);
 
 template<>
-inline jbooleanArray ConvertFromCppType<jbooleanArray>(JNIEnv *env, const std::vector<bool>& v) {
-    int length = v.size();
-    jbooleanArray array = env->NewBooleanArray(length);
-    std::vector<jboolean> temp(v.begin(), v.end());
-    env->SetBooleanArrayRegion(array, 0, length, temp.data());
-    return array;
-}
+jstring ConvertFromCppType<jstring>(JNIEnv *env, const std::string& str);
 
 template<>
-inline jshortArray ConvertFromCppType<jshortArray>(JNIEnv *env, const std::vector<int16_t>& v) {
-    int length = v.size();
-    jshortArray array = env->NewShortArray(length);
-    env->SetShortArrayRegion(array, 0, length, v.data());
-    return array;
-}
+jbooleanArray ConvertFromCppType<jbooleanArray>(JNIEnv *env, const std::vector<bool>& v);
 
 template<>
-inline jintArray ConvertFromCppType<jintArray>(JNIEnv *env, const std::vector<int32_t>& v) {
-    int length = v.size();
-    jintArray array = env->NewIntArray(length);
-    env->SetIntArrayRegion(array, 0, length, v.data());
-    return array;
-}
+jshortArray ConvertFromCppType<jshortArray>(JNIEnv *env, const std::vector<int16_t>& v);
 
 template<>
-inline jlongArray ConvertFromCppType<jlongArray>(JNIEnv *env, const std::vector<int64_t>& v) {
-    int length = v.size();
-    jlongArray array = env->NewLongArray(length);
-    env->SetLongArrayRegion(array, 0, length, v.data());
-    return array;
-}
+jintArray ConvertFromCppType<jintArray>(JNIEnv *env, const std::vector<int32_t>& v);
 
 template<>
-inline jfloatArray ConvertFromCppType<jfloatArray>(JNIEnv *env, const std::vector<float>& v) {
-    int length = v.size();
-    jfloatArray array = env->NewFloatArray(length);
-    env->SetFloatArrayRegion(array, 0, length, v.data());
-    return array;
-}
+jlongArray ConvertFromCppType<jlongArray>(JNIEnv *env, const std::vector<int64_t>& v);
 
 template<>
-inline jdoubleArray ConvertFromCppType<jdoubleArray>(JNIEnv *env, const std::vector<double>& v) {
-    int length = v.size();
-    jdoubleArray array = env->NewDoubleArray(length);
-    env->SetDoubleArrayRegion(array, 0, length, v.data());
-    return array;
-}
+jfloatArray ConvertFromCppType<jfloatArray>(JNIEnv *env, const std::vector<float>& v);
+
+template<>
+jdoubleArray ConvertFromCppType<jdoubleArray>(JNIEnv *env, const std::vector<double>& v);
 
 template<typename CppType>
 std::vector<CppType> ConvertToCppArray(JNIEnv *env, jobjectArray array) {
@@ -137,17 +89,7 @@ std::vector<CppType> ConvertToCppArray(JNIEnv *env, jobjectArray array) {
 }
 
 template<>
-inline std::vector<std::string> ConvertToCppArray(JNIEnv *env, jobjectArray array) {
-    std::vector<std::string> res;
-    jsize length = env->GetArrayLength(array);
-    res.reserve(length);
-    for (int i = 0; i < length; ++i) {
-        JString str((jstring)env->GetObjectArrayElement(array, i), env);
-        res.push_back(str.getData());
-    }
-
-    return res;
-}
+std::vector<std::string> ConvertToCppArray(JNIEnv *env, jobjectArray array);
 
 #include "CustomConverters.h"
 

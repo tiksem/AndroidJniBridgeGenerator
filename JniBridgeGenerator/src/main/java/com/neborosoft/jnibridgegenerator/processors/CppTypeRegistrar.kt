@@ -1,6 +1,7 @@
 package com.neborosoft.jnibridgegenerator.processors
 
 import com.neborosoft.annotations.CppAccessibleInterface
+import com.neborosoft.annotations.CppClass
 import com.neborosoft.jnibridgegenerator.TypesMapping
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
@@ -16,8 +17,26 @@ class CppTypeRegistrar(annotation: Class<out Annotation>,
         kmClass: ImmutableKmClass,
         annotation: Annotation
     ) {
-        require(annotation is CppAccessibleInterface)
-        val cppClassName = annotation.cppClassName.takeIf { it.isNotEmpty() } ?: className
-        TypesMapping.registerCppTypeMapping(kotlinTypeName = className, cppTypeName = cppClassName)
+        var withNativeConstructor = false
+        val cppClassName = when (annotation) {
+            is CppAccessibleInterface -> {
+                annotation.cppClassName.takeIf { it.isNotEmpty() } ?: className
+            }
+            is CppClass -> {
+                if (!annotation.withNativeConstructor) {
+                    return
+                }
+                withNativeConstructor = true
+                className
+            }
+            else -> {
+                throw UnsupportedOperationException("Unsupported annotation")
+            }
+        }
+        TypesMapping.registerCppTypeMapping(
+            kotlinTypeName = className,
+            cppTypeName = cppClassName,
+            hasJavaNativeConstructor = withNativeConstructor
+        )
     }
 }

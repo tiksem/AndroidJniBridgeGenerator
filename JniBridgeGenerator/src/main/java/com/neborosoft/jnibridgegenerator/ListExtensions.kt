@@ -76,3 +76,7 @@ fun <T1, T2> List<T1>.contentEqualsUsingPredicate(other: List<T2>, predicate: (T
 
     return true
 }
+
+fun <T> List<T>.contains(predicate: (T) -> Boolean): Boolean {
+    return find(predicate) != null
+}

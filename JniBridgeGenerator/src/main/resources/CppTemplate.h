@@ -11,7 +11,7 @@
 // headers
 // headers
 
-class CppTemplate : public Base {
+class CppTemplate {
 public:
     // Public Jni Interface
     // Public Jni Interface

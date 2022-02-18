@@ -4,6 +4,7 @@
 
 #include "KotlinClass.h"
 #include "Converters.h"
+#include "KotlinConstructors.h"
 
 // Method ides declaration
 static jmethodID dId = nullptr;
@@ -16,7 +17,7 @@ static jmethodID uId = nullptr;
 void KotlinClass::init(JNIEnv* env) {
     jclass clazz = env->FindClass("com/neborosoft/jnibridgegenerator/KotlinInterfaceTest");
     // Method ides generation
-    dId = env->GetMethodID(clazz, "d", "(I)V");
+    dId = env->GetMethodID(clazz, "d", "(ILcom/neborosoft/jnibridgegenerator/CppTestConstructor;)V");
     
     eeerId = env->GetMethodID(clazz, "eeer", "([J)Ljava/lang/String;");
     
@@ -28,9 +29,10 @@ KotlinClass::KotlinClass(JNIEnv *env, jobject obj) : JObject(env, obj) {
 }
 
 // Java method wrappers
-void KotlinClass::d(int32_t e) {
+void KotlinClass::d(int32_t e, CppTestConstructor* cppTest, const std::function<void(CppTestConstructor*)>& cppTestDeleter) {
     jint _e = ConvertFromCppType<jint>(env, e);   
-    env->CallVoidMethod(obj, dId, _e);
+jobject _cppTest = CreateCppTestConstructor(env, cppTest, cppTestDeleter);   
+    env->CallVoidMethod(obj, dId, _e, _cppTest);
 }
 
 

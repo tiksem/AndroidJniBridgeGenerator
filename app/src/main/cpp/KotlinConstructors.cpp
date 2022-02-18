@@ -5,6 +5,9 @@
 #include "KotlinConstructors.h"
 #include "Converters.h"
 
+static jmethodID constructorString = nullptr;
+static jclass classString = nullptr;
+
 // id
 static jmethodID constructorCppTestConstructor = nullptr;
 
@@ -17,10 +20,17 @@ static jclass classCppTestConstructor = nullptr;
 static jclass classKotlinStruct = nullptr;
 // class
 
+static jclass stringClass = nullptr;
+
+jobjectArray CreateStringArray(JNIEnv* env, jint length) {
+    return env->NewObjectArray(length, stringClass, nullptr);
+}
+
 void InitKotlinConstructors(JNIEnv* env) {
+    stringClass = env->FindClass("java/lang/String");
     // Init constructor
     classCppTestConstructor = env->FindClass("com/neborosoft/jnibridgegenerator/CppTestConstructorNative");
-    constructorCppTestConstructor = env->GetMethodID(classCppTestConstructor, "<init>", "(J)V");
+    constructorCppTestConstructor = env->GetMethodID(classCppTestConstructor, "<init>", "(JJ)V");
     
     classKotlinStruct = env->FindClass("com/neborosoft/jnibridgegenerator/KotlinStruct");
     constructorKotlinStruct = env->GetMethodID(classKotlinStruct, "<init>", "(ILjava/lang/String;)V");
@@ -28,9 +38,10 @@ void InitKotlinConstructors(JNIEnv* env) {
 }
 
 // Constructors
-jobject CreateCppTestConstructor(JNIEnv* env, CppTestConstructor* ptr) {
+jobject CreateCppTestConstructor(JNIEnv* env, CppTestConstructor* ptr, const std::function<void(CppTestConstructor*)>& deleter) {
     auto _ptr = ConvertFromCppType<jlong>(env, ptr);
-    return env->NewObject(classCppTestConstructor, constructorCppTestConstructor, _ptr);
+    auto _deleter = ConvertFromCppType<jlong>(env, deleter ? new std::function<void(CppTestConstructor*)>(deleter) : nullptr);
+    return env->NewObject(classCppTestConstructor, constructorCppTestConstructor, _ptr, _deleter);
 }
 
 jobjectArray CreateCppTestConstructorArray(JNIEnv* env, jint length) {

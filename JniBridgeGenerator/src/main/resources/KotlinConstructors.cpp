@@ -5,6 +5,9 @@
 #include "KotlinConstructors.h"
 #include "Converters.h"
 
+static jmethodID constructorString = nullptr;
+static jclass classString = nullptr;
+
 // id
 static jmethodID constructorKotlinObject = nullptr;
 // id
@@ -13,7 +16,14 @@ static jmethodID constructorKotlinObject = nullptr;
 static jclass classKotlinObject = nullptr;
 // class
 
+static jclass stringClass = nullptr;
+
+jobjectArray CreateStringArray(JNIEnv* env, jint length) {
+    return env->NewObjectArray(length, stringClass, nullptr);
+}
+
 void InitKotlinConstructors(JNIEnv* env) {
+    stringClass = env->FindClass("java/lang/String");
     // Init constructor
     classKotlinObject = env->FindClass("kotlinclassname");
     constructorKotlinObject = env->GetMethodID(classKotlinObject, "<init>", "jniSignature");

@@ -4,6 +4,7 @@
 
 #include "JObjectTemplate.h"
 #include "Converters.h"
+#include "KotlinConstructors.h"
 
 // Method ides declaration
 static jmethodID methodNameId = nullptr;

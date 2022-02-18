@@ -1,8 +1,7 @@
 package com.neborosoft.jnibridgegenerator.processors
 
 import com.neborosoft.jnibridgegenerator.AnnotationsResolver
-import com.neborosoft.jnibridgegenerator.Utils
-import com.neborosoft.jnibridgegenerator.methods.CppMethodGenerator
+import com.neborosoft.jnibridgegenerator.utils.Utils
 import com.neborosoft.jnibridgegenerator.methods.MethodGenerator
 import com.neborosoft.jnibridgegenerator.replaceStringBetweenTokens
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass

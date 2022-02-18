@@ -71,6 +71,10 @@ fun String.removeConstReferenceFromCppType(): String {
     return this.replace("const ", "").replace("&", "")
 }
 
+fun String.removePointerFromCppType(): String {
+    return this.trimEnd('*', ' ')
+}
+
 fun TypeName.getCppTypeName(convertFromCppToJni: Boolean, cppParam: CppParam?): String {
     return cppParam?.cppType ?: getCppTypeName(convertFromCppToJni)
 }
@@ -81,10 +85,10 @@ fun TypeName.getCppTypeName(convertFromCppToJni: Boolean, cppMethod: CppMethod?)
 
 fun TypeName.getCppTypeName(convertFromCppToJni: Boolean): String {
     return when (this) {
-        is ClassName -> TypesMapping.getCppTypeName(
+        is ClassName -> TypesMapping.getRegisteredCppTypeName(kotlinTypeName = this.simpleName) ?: TypesMapping.getCppTypeName(
             kotlinTypeName = this.simpleName,
             fromJniToCpp = !convertFromCppToJni
-        ) ?: TypesMapping.getRegisteredCppTypeName(kotlinTypeName = this.simpleName)
+        )
         is LambdaTypeName -> {
             val returnType = this.returnType.getCppTypeName(convertFromCppToJni = true)
             val args = this.parameters.joinToString(", ") {

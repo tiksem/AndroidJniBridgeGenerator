@@ -1,4 +1,6 @@
-package com.neborosoft.jnibridgegenerator
+package com.neborosoft.jnibridgegenerator.utils
+
+import com.neborosoft.jnibridgegenerator.readIntoString
 
 object Utils {
     fun readResource(resourceName: String): String {

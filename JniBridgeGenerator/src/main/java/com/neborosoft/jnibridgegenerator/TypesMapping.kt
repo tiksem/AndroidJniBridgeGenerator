@@ -100,6 +100,7 @@ private val KOTLIN_TO_JAVA_TYPE_MAPPING = mapOf(
 
 object TypesMapping {
     private val registeredCppTypesMapping = HashBiMap.create<String, String>()
+    private val cppTypesWithJavaConstructors = HashSet<String>()
 
     fun getCppTypeName(kotlinTypeName: String, fromJniToCpp: Boolean): String? {
         val map = if (fromJniToCpp) {
@@ -119,12 +120,19 @@ object TypesMapping {
         return KOTLIN_TO_JNI_TYPES_MAPPING[kotlinTypeName] ?: "jobject"
     }
 
-    fun registerCppTypeMapping(kotlinTypeName: String, cppTypeName: String) {
+    fun registerCppTypeMapping(kotlinTypeName: String, cppTypeName: String, hasJavaNativeConstructor: Boolean) {
         registeredCppTypesMapping[kotlinTypeName] = cppTypeName
+        if (hasJavaNativeConstructor) {
+            cppTypesWithJavaConstructors.add(cppTypeName)
+        }
     }
 
     fun isCppTypeRegistered(cppTypeName: String): Boolean {
         return registeredCppTypesMapping.containsValue(cppTypeName)
+    }
+
+    fun isCppTypeWithJavaConstructor(cppTypeName: String): Boolean {
+        return cppTypesWithJavaConstructors.contains(cppTypeName)
     }
 
     fun getRegisteredCppTypeName(kotlinTypeName: String): String? {

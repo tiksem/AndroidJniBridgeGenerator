@@ -1,6 +1,6 @@
 package com.neborosoft.jnibridgegenerator
 
-import com.neborosoft.jnibridgegenerator.Utils.readResource
+import com.neborosoft.jnibridgegenerator.utils.Utils.readResource
 import com.squareup.kotlinpoet.LONG
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.metadata.ImmutableKmClass
@@ -28,6 +28,10 @@ data class ConstructorParam(
 ) {
     fun isCppPtr(): Boolean {
         return name == Constants.PTR && type == LONG
+    }
+
+    fun isCppDeleter(): Boolean {
+        return name == "deleter" && type == LONG
     }
 }
 
@@ -82,6 +86,8 @@ object KotlinCppConstructorGenerator {
         params.forEach {
             val cppType = if (it.isCppPtr()) {
                 "$cppClassName*"
+            } else if (it.isCppDeleter()) {
+                "const std::function<void($cppClassName*)>&"
             } else {
                 it.type.getCppTypeName(convertFromCppToJni = true, cppParam = null)
                     .addConstReferenceToCppTypeNameIfRequired()
@@ -89,8 +95,14 @@ object KotlinCppConstructorGenerator {
             constructorArgs.add("$cppType ${it.name}")
             constructorCallArgs.add("_" + it.name)
 
+            val cppArg = if (it.isCppDeleter()) {
+                "${it.name} ? new std::function<void($cppClassName*)>(${it.name}) : nullptr"
+            } else {
+                it.name
+            }
+
             val jniType = it.type.getJniTypeName()
-            val converter = "    auto _${it.name} = ConvertFromCppType<$jniType>(env, ${it.name});"
+            val converter = "    auto _${it.name} = ConvertFromCppType<$jniType>(env, $cppArg);"
             converters.add(converter)
         }
 

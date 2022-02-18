@@ -18,6 +18,7 @@ object Constants {
 
     val CPP_RESOURCES = listOf(
         "Converters.h",
+        "Converters.cpp",
         "JArray.h",
         "JArray.cpp",
         "JString.h",

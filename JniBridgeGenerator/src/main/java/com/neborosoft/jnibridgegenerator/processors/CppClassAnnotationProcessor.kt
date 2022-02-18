@@ -25,6 +25,7 @@ class CppClassAnnotationProcessor(
     private fun generateKotlinClass(
         methods: List<CppMethodGenerator>,
         packageName: String,
+        kotlinInterfaceName: String,
         kotlinClassName: String,
         generateNativeConstructor: Boolean
     ): FileSpec {
@@ -32,6 +33,8 @@ class CppClassAnnotationProcessor(
             if (generateNativeConstructor) {
                 primaryConstructor(
                     PropertySpec.builder(name = "ptr", type = LONG, KModifier.PRIVATE)
+                        .mutable().build(),
+                    PropertySpec.builder(name = "deleter", type = LONG, KModifier.PRIVATE)
                         .mutable().build()
                 )
             } else {
@@ -49,6 +52,8 @@ class CppClassAnnotationProcessor(
             addFunctions(funSpecs = methods.flatMap {
                 it.getKotlinSpecs()
             })
+
+            addSuperinterface(ClassName(packageName = packageName, kotlinInterfaceName))
         }.build()
 
         return FileSpec.builder(packageName, kotlinClassName)
@@ -59,8 +64,7 @@ class CppClassAnnotationProcessor(
         existedClassCode: String?,
         methods: List<CppMethodGenerator>,
         includes: String,
-        cppClassName: String,
-        base: String
+        cppClassName: String
     ): String {
         val methodsDeclarations = methods.mapNotNull {
             it.getCppHeaderMethodDeclaration()
@@ -73,7 +77,7 @@ class CppClassAnnotationProcessor(
 
         val replacement = existedClassCode ?: cppTemplate
 
-        var res = replacement.replaceStringBetweenTokens(
+        return replacement.replaceStringBetweenTokens(
             token1 = JNI_PUBLIC_INTERFACE_TOKEN,
             token2 = JNI_PUBLIC_INTERFACE_TOKEN,
             replacement = code
@@ -82,15 +86,6 @@ class CppClassAnnotationProcessor(
             token2 = INCLUDE_START_TOKEN,
             replacement = includes
         ).replace(Constants.CPP_TEMPLATE_CLASS_NAME, cppClassName)
-
-        res = if (base.isEmpty()) {
-            res.replaceStringBetweenTokens(" : public ", "{", "")
-                .replace(": public", "")
-        } else {
-            res.replaceStringBetweenTokens("class $cppClassName", "{", " : public $base ")
-        }
-
-        return res
     }
 
     override fun processClass(
@@ -105,20 +100,21 @@ class CppClassAnnotationProcessor(
             "@CppClass processor failed. Invalid $className, should be interface"
         }
 
+        require(kmClass.supertypes.contains { it.getTypeName().getSimpleName() == "Releasable" }) {
+            "@CppClass processor failed. $className should inherit Releasable"
+        }
+
+        val kotlinInterfaceName = className
         val kotlinClassName = className + Constants.KOTLIN_CLASS_IMPLEMENTATION_POSTFIX
 
         val methods: MutableList<CppMethodGenerator> = if (annotation.withNativeConstructor) {
-            if (annotation.releaseOnFinalize) {
-                mutableListOf(
-                    ReleaseCppMethodGenerator()
-                )
-            } else {
-                mutableListOf()
-            }
+            mutableListOf(
+                ReleaseCppMethodGenerator(includeDeleter = true)
+            )
         } else {
             mutableListOf(
                 NewInstanceCppMethodGenerator(),
-                ReleaseCppMethodGenerator()
+                ReleaseCppMethodGenerator(includeDeleter = false)
             )
         }
 
@@ -136,6 +132,7 @@ class CppClassAnnotationProcessor(
         val kotlinClass = generateKotlinClass(
             methods,
             packageName,
+            kotlinInterfaceName,
             kotlinClassName,
             generateNativeConstructor = annotation.withNativeConstructor
         )
@@ -150,10 +147,6 @@ class CppClassAnnotationProcessor(
 
         var headersList = methods.flatMap {
             it.getRequestedCppHeaders()
-        }
-
-        if (annotation.base.isNotEmpty()) {
-            headersList = headersList.withPrependedItem(annotation.base)
         }
 
         val headers = headersList.distinct().joinToString("\n") {
@@ -173,8 +166,7 @@ class CppClassAnnotationProcessor(
             methods = methods,
             cppClassName = className,
             includes = headers,
-            existedClassCode = cppFile.tryReadText(),
-            base = annotation.base
+            existedClassCode = cppFile.tryReadText()
         )
         cppFile.writeText(cppClass)
 
@@ -183,10 +175,16 @@ class CppClassAnnotationProcessor(
                 className = kotlinClassName,
                 cppClassName = className,
                 packageName = packageName,
-                params = listOf(ConstructorParam(
-                    name = "ptr",
-                    type = LONG
-                ))
+                params = listOf(
+                    ConstructorParam(
+                        name = "ptr",
+                        type = LONG
+                    ),
+                    ConstructorParam(
+                        name = "deleter",
+                        type = LONG
+                    )
+                )
             )
         }
     }

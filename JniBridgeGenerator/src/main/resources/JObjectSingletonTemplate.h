@@ -2,8 +2,8 @@
 // Created by Semyon Tikhonenko on 12/17/21.
 //
 
-#ifndef JNIBRIDGEGENERATOR_JOBJECTSINGLETONTEMPLATE_H
-#define JNIBRIDGEGENERATOR_JOBJECTSINGLETONTEMPLATE_H
+#ifndef JNIBRIDGEGENERATOR_JObjectSingletonTemplate_H
+#define JNIBRIDGEGENERATOR_JObjectSingletonTemplate_H
 
 
 #include <jni.h>

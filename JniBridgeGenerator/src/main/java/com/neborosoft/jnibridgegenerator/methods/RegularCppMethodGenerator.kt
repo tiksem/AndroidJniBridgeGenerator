@@ -4,6 +4,7 @@ import com.neborosoft.annotations.CppMethod
 import com.neborosoft.annotations.CppParam
 import com.neborosoft.jnibridgegenerator.*
 import com.neborosoft.jnibridgegenerator.Constants.PTR
+import com.neborosoft.jnibridgegenerator.utils.GeneratedParamNameIterator
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.ImmutableKmFunction
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
@@ -84,16 +85,23 @@ class RegularCppMethodGenerator(
 
         val callArgsList = arrayListOf(PTR)
         val baseParameterSpecs = kmFunction.valueParameters.map { p ->
-            callArgsList.add(p.name)
+            val type = p.type!!.getTypeName().let {
+                if (it is LambdaTypeName) {
+                    val paramsGenerator = GeneratedParamNameIterator()
+                    val paramsList = it.parameters.joinToString(", ") {
+                        paramsGenerator.next()
+                    }
+                    callArgsList.add("{ $paramsList -> ${p.name}($paramsList) }")
+                    it
+                } else {
+                    callArgsList.add(p.name)
+                    it
+                }
+            }
+
             ParameterSpec(
                 name = p.name,
-                type = p.type!!.getTypeName().let {
-                    if (it is LambdaTypeName) {
-                        lambdaGenerator.generateIfNotGenerated(it)
-                    } else {
-                        it
-                    }
-                }
+                type = type
             )
         }
 
@@ -102,7 +110,16 @@ class RegularCppMethodGenerator(
                 name = PTR,
                 type = LONG
             )
-        )
+        ).map {
+            val type = it.type
+            if (type is LambdaTypeName) {
+                ParameterSpec.builder(
+                    it.name, lambdaGenerator.generateIfNotGenerated(type)
+                )
+            } else {
+                ParameterSpec.builder(it.name, type)
+            }.build()
+        }
 
         val callArgs = callArgsList.joinToString(", ")
         val nativeFun = FunSpec.builder(kmFunction.name)
@@ -113,6 +130,7 @@ class RegularCppMethodGenerator(
             .build()
         return listOf(
             FunSpec.builder(kmFunction.name)
+                .addModifiers(KModifier.OVERRIDE)
                 .addParameters(parameterSpecs = baseParameterSpecs)
                 .addStatement("return ${kmFunction.name}($callArgs)")
                 .returns(kmFunction.returnType.getTypeName())
